@@ -16,10 +16,13 @@ setup(
     package_data={'': ['*.txt']},
     entry_points={
         'console_scripts': [
-            'agilebot=agilebot.__main__:main'
+            'agilebot=agilebot.cmd:main'
         ]
     },
     install_requires=[
-        'py-trello'
+        'requests',
+        'requests-oauthlib',
+        'pytoml',
+        'colorlog'
     ]
 )
