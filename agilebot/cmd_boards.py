@@ -45,18 +45,18 @@ def cmd_boards_find(args, bot):
 def sub_command(main_subparsers):
     # boards command
     board_parser = main_subparsers.add_parser('boards', help='interact with boards')
-    board_subparsers = board_parser.add_subparsers(help='sub-commands')
-    board_parser.set_defaults(func=cmd_boards)
+    board_subparsers = board_parser.add_subparsers(help='sub-commands', dest='subparser_1')
+    board_parser.set_defaults(func_help=board_parser.print_help)
 
     # list command
     parser_list = board_subparsers.add_parser('list', help='list boards')
     parser_list.set_defaults(func=cmd_boards_list)
-    logger.debug('list command')
-    
+
     # find command
     parser_find = board_subparsers.add_parser('find', help='find boards')
     parser_find.add_argument('--open', action='store_true', help='find open boards')
     parser_find.add_argument('--closed', action='store_true', help='find closed boards')
     parser_find.add_argument('--organization_id', default=None, help='find organization boards')
     parser_find.set_defaults(func=cmd_boards_find)
-    logger.debug('find command')
+
+    return board_parser

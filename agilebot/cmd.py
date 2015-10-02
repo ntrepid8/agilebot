@@ -1,6 +1,7 @@
 __author__ = 'ntrepid8'
 import argparse
 import os
+import sys
 import pytoml as toml
 import logging
 from colorlog import ColoredFormatter
@@ -30,6 +31,10 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
+def cmd_main(args, bot):
+    pass
+
+
 def main():
     # config file
     toml_config = {}
@@ -53,7 +58,7 @@ def main():
 
     # command line args
     parser = argparse.ArgumentParser(description='Automate functions for Agile development sprints.')
-    subparsers = parser.add_subparsers(help='sub-command help')
+    subparsers = parser.add_subparsers(help='sub-command help', dest='subparser_0')
     parser.add_argument('--trello-organization-id', help='organization ID in Trello')
     parser.add_argument('--trello-api-key', help='your Trello API key')
     parser.add_argument('--trello-api-secret', help='your Trello API secret')
@@ -61,7 +66,9 @@ def main():
     parser.add_argument('--trello-oauth-secret', help='your Trello OAuth access secret')
 
     # boards sub-command
-    parser_boards = cmd_boards.sub_command(subparsers)
+    sub_commands = {
+        'boards': cmd_boards.sub_command(subparsers)
+    }
 
     # set defaults, ENV var first, then config file, then command line args
     parser.set_defaults(
@@ -79,6 +86,14 @@ def main():
         trello_oauth_token=args.trello_oauth_token,
         trello_oauth_secret=args.trello_oauth_secret,
         trello_organization_id=args.trello_organization_id)
+
+    if not getattr(args, 'func', None):
+        if hasattr(args, 'func_help'):
+            func_help = args.func_help
+        else:
+            func_help = parser.print_help
+        func_help()
+        sys.exit(1)
     args.func(args, bot)
 
 
