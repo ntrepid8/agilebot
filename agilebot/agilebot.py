@@ -74,32 +74,51 @@ class AgileBot(object):
                     query_params=None,
                     include_lists=False,
                     include_cards=False):
+        # build URL
         url = [TRELLO_API_BASE_URL, '/members/me/boards']
+
+        # query_params
         query_params = query_params or {}
+
+        # query_params.filter
+        filter_params = filter_params or []
+        filter_params.append('open')  # default to only "open" boards
         if filter_params:
             query_params['filter'] = ','.join(filter_params)
+
+        # fetch lists along with board or not
         if include_lists is False and include_cards is True:
             raise ValueError('include_lists must be True if include_cards is True')
         if include_lists is True:
             query_params['lists'] = 'open'
+
+        # fetch the boards from trello
         resp = self.trello.session.get(''.join(url), params=query_params)
         self.log_http(resp)
 
         if resp.status_code != requests.codes.ok:
             raise ValueError('http error: {}'.format(resp.status_code))
         resp_json = resp.json()
+
+        # filter by organization_id
         if organization_id:
             logger.debug('filter by organization_id: {}'.format(organization_id))
             resp_json = [i for i in resp_json if i['idOrganization'] == organization_id]
         else:
             logger.debug('filter any boards with an organization_id')
             resp_json = [i for i in resp_json if not i['idOrganization']]
+
+        # filter by name
         if name:
             logger.debug('filter by name: {}'.format(name))
             resp_json = [i for i in resp_json if fnmatch(i['name'], name)]
+
+        # fetch cards along with lists
         if include_cards is True:
             for i in resp_json:
                 self.add_cards_to_board(i)
+
+        # all done!
         return resp_json
 
     def add_cards_to_board(self, board):
