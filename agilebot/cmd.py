@@ -9,7 +9,8 @@ from colorlog import ColoredFormatter
 from agilebot import (
     agilebot,
     cmd_boards,
-    cmd_slack
+    cmd_slack,
+    cmd_sprint
 )
 
 CONFIG_PATH = os.path.expanduser('~/.agilebot.toml')
@@ -102,7 +103,8 @@ def main():
     # boards sub-command
     sub_commands = {
         'boards': cmd_boards.sub_command(subparsers),
-        'slack': cmd_slack.sub_command(subparsers)
+        'slack': cmd_slack.sub_command(subparsers),
+        'sprint': cmd_sprint.sub_command(subparsers)
     }
 
     # set defaults, ENV var first, then config file, then command line args

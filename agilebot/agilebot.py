@@ -5,6 +5,7 @@ import logging
 from logging import NullHandler
 from collections import namedtuple
 import json
+from fnmatch import fnmatch
 logger = logging.getLogger('agilebot.lib')
 logger.addHandler(NullHandler())
 TRELLO_API_BASE_URL = 'https://api.trello.com/1'
@@ -56,11 +57,21 @@ class AgileBot(object):
             self._boards = [b for b in boards if b.get('idOrganization') is None]
         return self._boards
 
-    def find_boards(self, filter_params=None, organization_id=None):
+    def find_boards(self,
+                    filter_params=None,
+                    organization_id=None,
+                    name=None,
+                    query_params=None,
+                    include_lists=False,
+                    include_cards=False):
         url = [TRELLO_API_BASE_URL, '/members/me/boards']
-        query_params = {}
+        query_params = query_params or {}
         if filter_params:
             query_params['filter'] = ','.join(filter_params)
+        if include_lists is False and include_cards is True:
+            raise ValueError('include_lists must be True if include_cards is True')
+        if include_lists is True:
+            query_params['lists'] = 'open'
         resp = self.trello.session.get(''.join(url), params=query_params)
         logger.debug('{method} {code} {url}'.format(
             method=resp.request.method,
@@ -71,7 +82,41 @@ class AgileBot(object):
             raise ValueError('http error: {}'.format(resp.status_code))
         resp_json = resp.json()
         if organization_id:
+            logger.debug('filter by organization_id: {}'.format(organization_id))
             resp_json = [i for i in resp_json if i['idOrganization'] == organization_id]
+        else:
+            logger.debug('filter any boards with an organization_id')
+            resp_json = [i for i in resp_json if not i['idOrganization']]
+        if name:
+            logger.debug('filter by name: {}'.format(name))
+            resp_json = [i for i in resp_json if fnmatch(i['name'], name)]
+        if include_cards is True:
+            for i in resp_json:
+                self.add_cards_to_board(i)
+        return resp_json
+
+    def add_cards_to_board(self, board):
+        cards = self.find_cards(board['id'])
+        for c in cards:
+            for l in board['lists']:
+                if l['id'] != c['idList']:
+                    continue
+                if 'cards' not in l:
+                    l['cards'] = []
+                l['cards'].append(c)
+        return board
+
+    def find_cards(self, board_id):
+        url = [TRELLO_API_BASE_URL, '/boards/{board_id}/cards'.format(board_id=board_id)]
+        resp = self.trello.session.get(''.join(url))
+        logger.debug('{method} {code} {url}'.format(
+            method=resp.request.method,
+            code=resp.status_code,
+            url=resp.request.url
+        ))
+        if resp.status_code != requests.codes.ok:
+            raise ValueError('http error: {}'.format(resp.status_code))
+        resp_json = resp.json()
         return resp_json
 
     def post_slack_msg(self, text, webhook_url=None, channel=None, icon_emoji=None, username=None):

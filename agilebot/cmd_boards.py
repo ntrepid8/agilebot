@@ -14,13 +14,13 @@ def cmd_boards(args, bot):
 def find_boards(args, bot):
     # search args
     search_args = []
-    if args.open:
-        search_args.append('open')
     if args.closed:
         search_args.append('closed')
+    else:
+        search_args.append('open')
 
     try:
-        resp = bot.find_boards(search_args, organization_id=args.organization_id)
+        resp = bot.find_boards(search_args, organization_id=args.organization_id, name=args.name)
     except Exception as e:
         logger.error('{}'.format(e))
         sys.exit(1)
@@ -46,16 +46,16 @@ def sub_command(main_subparsers):
 
     # list command
     parser_list = board_subparsers.add_parser('list', help='list boards')
-    parser_list.add_argument('--open', action='store_true', help='list open boards')
     parser_list.add_argument('--closed', action='store_true', help='list closed boards')
     parser_list.add_argument('--organization-id', default=None, help='list organization boards')
+    parser_list.add_argument('--name', help='board name (supports *patterns*)')
     parser_list.set_defaults(func=cmd_boards_list)
 
     # find command
     parser_find = board_subparsers.add_parser('find', help='find boards')
-    parser_find.add_argument('--open', action='store_true', help='find open boards')
     parser_find.add_argument('--closed', action='store_true', help='find closed boards')
     parser_find.add_argument('--organization-id', default=None, help='find organization boards')
+    parser_find.add_argument('--name', help='board name (supports *patterns*)')
     parser_find.set_defaults(func=cmd_boards_find)
 
     return board_parser
