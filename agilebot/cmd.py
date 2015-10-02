@@ -93,7 +93,7 @@ def main():
     # boards sub-command
     sub_commands = {
         'boards': cmd_boards.sub_command(subparsers),
-        'slack': cmd_slack.sub_command(subparsers   )
+        'slack': cmd_slack.sub_command(subparsers)
     }
 
     # set defaults, ENV var first, then config file, then command line args
