@@ -14,12 +14,10 @@ def cmd_boards(args, bot):
 def cmd_boards_list(args, bot):
     logger.debug('list boards')
     try:
-        resp = bot.boards
+        print(json.dumps([b.get('name') for b in bot.boards]))
     except Exception as e:
         logger.error('{}'.format(e))
         sys.exit(1)
-    else:
-        print(json.dumps(resp))
 
 
 def cmd_boards_find(args, bot):
