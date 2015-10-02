@@ -152,8 +152,14 @@ class AgileBot(object):
 
     def create_sprint(self, name=None, sprint_list_names=None, organization_id=None):
 
-        # create the board
+        # render the name
         sprint_name = self.format_sprint_name(name or 'Sprint {iso_year}.{iso_week}')
+
+        # check for duplicate names
+        duplicates = self.find_boards(name=sprint_name, organization_id=organization_id)
+        if duplicates:
+            raise ValueError('duplicate board name: "{}"'.format(sprint_name))
+
         board_url = [TRELLO_API_BASE_URL, '/boards']
         board_data = {
             'name': sprint_name

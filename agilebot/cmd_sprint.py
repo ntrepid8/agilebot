@@ -45,8 +45,13 @@ def cmd_sprint_info(args, bot):
 
 
 def cmd_sprint_create(args, bot):
-    resp = bot.create_sprint(name=args.name, organization_id=args.organization_id)
-    print(json.dumps(resp))
+    try:
+        resp = bot.create_sprint(name=args.name, organization_id=args.organization_id)
+    except Exception as e:
+        logger.error('{}'.format(e))
+        sys.exit(1)
+    else:
+        print(json.dumps(resp))
 
 
 def sub_command(main_subparsers):
