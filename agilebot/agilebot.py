@@ -95,4 +95,4 @@ class AgileBot(object):
             data=json.dumps(data))
         if resp.status_code != requests.codes.ok:
             raise ValueError('http error: {}'.format(resp.status_code))
-        return True
+        return {'success': True}

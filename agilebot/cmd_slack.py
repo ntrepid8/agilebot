@@ -8,13 +8,14 @@ logger.addHandler(NullHandler())
 
 
 def cmd_slack_post(args, bot):
-    bot.post_slack_msg(
+    resp = bot.post_slack_msg(
         text=args.text,
         webhook_url=args.webhook_url,
         channel=args.channel,
         icon_emoji=args.icon_emoji,
         username=args.username
     )
+    print(json.dumps(resp))
 
 
 def sub_command(main_subparsers):
