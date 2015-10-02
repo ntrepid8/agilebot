@@ -43,6 +43,10 @@ def merge(dict_0, dict_1):
     return dict_0
 
 
+def get_first_value(*args):
+    return next((i for i in args if i is not None), None)
+
+
 def cmd_main(args, bot):
     pass
 
@@ -50,8 +54,16 @@ def cmd_main(args, bot):
 def main():
     # config
     conf = {
-        'trello': {},
-        'agile': {},
+        'trello': {
+            'api_key': None,
+            'api_secret': None,
+            'oauth_token': None,
+            'oauth_secret': None,
+            'organization_id': None
+        },
+        'agile': {
+            'backlogs': []
+        },
         'slack': {
             'webhook_url': None,
             'channel': None,
@@ -78,9 +90,6 @@ def main():
     logging.getLogger('requests').setLevel(lib_log_level)
     logging.getLogger('requests_oauthlib').setLevel(lib_log_level)
 
-    # trello_conf
-    trello_conf = conf.get('trello') or {}
-
     # command line args
     parser = argparse.ArgumentParser(description='Automate functions for Agile development sprints.')
     subparsers = parser.add_subparsers(help='sub-command help', dest='subparser_0')
@@ -98,15 +107,42 @@ def main():
 
     # set defaults, ENV var first, then config file, then command line args
     parser.set_defaults(
-        trello_organization_id=os.environ.get('TRELLO_ORGANIZATION_ID', trello_conf.get('organization_id')),
-        trello_api_key=os.environ.get('TRELLO_API_KEY', trello_conf.get('api_key')),
-        trello_api_secret=os.environ.get('TRELLO_API_SECRET', trello_conf.get('api_secret')),
-        trello_oauth_token=os.environ.get('TRELLO_OAUTH_TOKEN', trello_conf.get('oauth_token')),
-        trello_oauth_secret=os.environ.get('TRELLO_OAUTH_SECRET', trello_conf.get('oauth_secret')),
-        slack_webhook_url=conf['slack'].get('webhook_url'),
-        slack_channel=conf['slack'].get('channel'),
-        slack_icon_emoji=conf['slack'].get('icon_emoji'),
-        slack_username=conf['slack'].get('username'),
+        trello_api_key=get_first_value(
+            os.environ.get('TRELLO_API_KEY'),
+            conf['trello']['api_key']
+        ),
+        trello_api_secret=get_first_value(
+            os.environ.get('TRELLO_API_SECRET'),
+            conf['trello']['api_secret']
+        ),
+        trello_oauth_token=get_first_value(
+            os.environ.get('TRELLO_OAUTH_TOKEN'),
+            conf['trello']['oauth_token']
+        ),
+        trello_oauth_secret=get_first_value(
+            os.environ.get('TRELLO_OAUTH_SECRET'),
+            conf['trello']['oauth_secret']
+        ),
+        trello_organization_id=get_first_value(
+            os.environ.get('TRELLO_ORGANIZATION_ID`'),
+            conf['trello']['organization_id']
+        ),
+        slack_webhook_url=get_first_value(
+            os.environ.get('SLACK_WEBHOOK_URL'),
+            conf['slack']['webhook_url']
+        ),
+        slack_channel=get_first_value(
+            os.environ.get('SLACK_CHANNEL'),
+            conf['slack']['channel']
+        ),
+        slack_icon_emoji=get_first_value(
+            os.environ.get('SLACK_ICON_EMOJI'),
+            conf['slack']['icon_emoji']
+        ),
+        slack_username=get_first_value(
+            os.environ.get('SLACK_USERNAME'),
+            conf['slack']['username']
+        ),
     )
 
     args = parser.parse_args()
