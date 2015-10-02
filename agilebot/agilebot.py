@@ -56,11 +56,9 @@ class AgileBot(object):
             self._boards = [b for b in boards if b.get('idOrganization') is None]
         return self._boards
 
-    def find_boards(self, filter_params=None, organization=False):
+    def find_boards(self, filter_params=None, organization_id=None):
         url = [TRELLO_API_BASE_URL, '/members/me/boards']
-        query_params = {
-            'organization': 'true' if organization is True else 'false'
-        }
+        query_params = {}
         if filter_params:
             query_params['filter'] = ','.join(filter_params)
         resp = self.trello.session.get(''.join(url), params=query_params)
@@ -71,7 +69,10 @@ class AgileBot(object):
         ))
         if resp.status_code != requests.codes.ok:
             raise ValueError('http error: {}'.format(resp.status_code))
-        return resp.json()
+        resp_json = resp.json()
+        if organization_id:
+            resp_json = [i for i in resp_json if i['idOrganization'] == organization_id]
+        return resp_json
 
     def post_slack_msg(self, text, webhook_url=None, channel=None, icon_emoji=None, username=None):
         data = {
