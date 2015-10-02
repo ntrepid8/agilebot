@@ -44,6 +44,11 @@ def cmd_sprint_info(args, bot):
     print(json.dumps(resp))
 
 
+def cmd_sprint_create(args, bot):
+    resp = bot.create_sprint(name=args.name, organization_id=args.organization_id)
+    print(json.dumps(resp))
+
+
 def sub_command(main_subparsers):
 
     # sprint command
@@ -57,3 +62,12 @@ def sub_command(main_subparsers):
     parser_info.add_argument('--organization-id', default=None, help='organization id')
     parser_info.add_argument('--name', default='Sprint*', help='sprint board name (supports *patterns*)')
     parser_info.set_defaults(func=cmd_sprint_info)
+    
+    # create command
+    parser_create = sprint_subparsers.add_parser('create', help='show create about sprints')
+    parser_create.add_argument('--organization-id', default=None, help='organization id')
+    parser_create.add_argument(
+        '--name',
+        default='Sprint {iso_year}.{iso_week}',
+        help='sprint board name (supports *patterns*)')
+    parser_create.set_defaults(func=cmd_sprint_create)

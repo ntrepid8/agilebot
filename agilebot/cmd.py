@@ -63,7 +63,8 @@ def main():
             'organization_id': None
         },
         'agile': {
-            'backlogs': []
+            'backlogs': [],
+            'sprint_lists': ['To Do', 'In Progress', 'Completed', 'Deployed']
         },
         'slack': {
             'webhook_url': None,
@@ -145,6 +146,10 @@ def main():
             os.environ.get('SLACK_USERNAME'),
             conf['slack']['username']
         ),
+        agile_sprint_lists=get_first_value(
+            os.environ.get('AGILE_SPRINT_LISTS'),
+            conf['agile']['sprint_lists']
+        ),
     )
 
     args = parser.parse_args()
@@ -158,6 +163,7 @@ def main():
         slack_channel=args.slack_channel,
         slack_icon_emoji=args.slack_icon_emoji,
         slack_username=args.slack_username,
+        agile_sprint_lists=args.agile_sprint_lists
     )
 
     if not getattr(args, 'func', None):

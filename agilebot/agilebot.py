@@ -6,6 +6,8 @@ from logging import NullHandler
 from collections import namedtuple
 import json
 from fnmatch import fnmatch
+from datetime import date
+from agilebot import util
 logger = logging.getLogger('agilebot.lib')
 logger.addHandler(NullHandler())
 TRELLO_API_BASE_URL = 'https://api.trello.com/1'
@@ -22,9 +24,14 @@ class AgileBot(object):
                  slack_webhook_url=None,
                  slack_channel=None,
                  slack_icon_emoji=None,
-                 slack_username=None):
+                 slack_username=None,
+                 agile_sprint_lists=None):
 
         # agile
+        agile_conf_class = namedtuple('AgileConf', 'sprint_lists')
+        self.agile = agile_conf_class(
+            sprint_lists=agile_sprint_lists
+        )
         self._boards = None
 
         # trello
@@ -56,6 +63,9 @@ class AgileBot(object):
             boards = self.find_boards()
             self._boards = [b for b in boards if b.get('idOrganization') is None]
         return self._boards
+
+    def log_http(self, resp):
+        util.log_request_response(resp, logger)
 
     def find_boards(self,
                     filter_params=None,
@@ -118,6 +128,72 @@ class AgileBot(object):
             raise ValueError('http error: {}'.format(resp.status_code))
         resp_json = resp.json()
         return resp_json
+
+    def format_sprint_name(self, sprint_name, iso_year=None, iso_week=None):
+        iso_date = date.today().isocalendar()
+        sn_kwargs = dict(
+            iso_year=iso_year or iso_date[0],
+            iso_week=iso_week or iso_date[1]
+        )
+        return sprint_name.format(**sn_kwargs)
+
+    def create_sprint(self, name=None, sprint_list_names=None, organization_id=None):
+
+        # create the board
+        sprint_name = self.format_sprint_name(name or 'Sprint {iso_year}.{iso_week}')
+        board_url = [TRELLO_API_BASE_URL, '/boards']
+        board_data = {
+            'name': sprint_name
+        }
+        org_id = organization_id or self.trello.organization_id
+        if org_id:
+            board_data['idOrganization'] = org_id
+        board_resp = self.trello.session.post(
+            ''.join(board_url),
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps(board_data)
+        )
+        self.log_http(board_resp)
+
+        if board_resp.status_code != requests.codes.ok:
+            raise ValueError('http error: {}'.format(board_resp.status_code))
+        board_json = board_resp.json()
+
+        # close the default lists
+        default_lists_resp = self.trello.session.get(
+            ''.join([TRELLO_API_BASE_URL, '/boards/{board_id}/lists'.format(board_id=board_json['id'])])
+        )
+
+        self.log_http(default_lists_resp)
+        if default_lists_resp.status_code != requests.codes.ok:
+            raise ValueError('http error: {}'.format(default_lists_resp.status_code))
+        for l in default_lists_resp.json():
+            l_resp = self.trello.session.put(
+                ''.join([TRELLO_API_BASE_URL, '/lists/{list_id}/closed'.format(list_id=l['id'])]),
+                headers={'Content-Type': 'application/json'},
+                data=json.dumps({'value': True})
+            )
+            self.log_http(l_resp)
+
+        # add the lists
+        lists_url = [TRELLO_API_BASE_URL, '/boards/{board_id}/lists'.format(board_id=board_json['id'])]
+        sprint_list_names = sprint_list_names or self.agile.sprint_lists
+        sprint_list_resps = []
+        for index, sln in enumerate(sprint_list_names):
+            sprint_list_resps.append(self.trello.session.post(
+                ''.join(lists_url),
+                headers={'Content-Type': 'application/json'},
+                data=json.dumps({
+                    'name': sln,
+                    'pos': index + 1
+                })
+            ))
+            logger.debug('{method} {code} {url}'.format(
+                method=sprint_list_resps[-1].request.method,
+                code=sprint_list_resps[-1].status_code,
+                url=sprint_list_resps[-1].request.url
+            ))
+        return {'success': True, 'id': board_json['id'], 'name': board_json['name']}
 
     def post_slack_msg(self, text, webhook_url=None, channel=None, icon_emoji=None, username=None):
         data = {
