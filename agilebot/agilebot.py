@@ -83,11 +83,8 @@ class AgileBot(object):
         if include_lists is True:
             query_params['lists'] = 'open'
         resp = self.trello.session.get(''.join(url), params=query_params)
-        logger.debug('{method} {code} {url}'.format(
-            method=resp.request.method,
-            code=resp.status_code,
-            url=resp.request.url
-        ))
+        self.log_http(resp)
+
         if resp.status_code != requests.codes.ok:
             raise ValueError('http error: {}'.format(resp.status_code))
         resp_json = resp.json()
@@ -119,11 +116,8 @@ class AgileBot(object):
     def find_cards(self, board_id):
         url = [TRELLO_API_BASE_URL, '/boards/{board_id}/cards'.format(board_id=board_id)]
         resp = self.trello.session.get(''.join(url))
-        logger.debug('{method} {code} {url}'.format(
-            method=resp.request.method,
-            code=resp.status_code,
-            url=resp.request.url
-        ))
+        self.log_http(resp)
+
         if resp.status_code != requests.codes.ok:
             raise ValueError('http error: {}'.format(resp.status_code))
         resp_json = resp.json()
@@ -188,11 +182,8 @@ class AgileBot(object):
                     'pos': index + 1
                 })
             ))
-            logger.debug('{method} {code} {url}'.format(
-                method=sprint_list_resps[-1].request.method,
-                code=sprint_list_resps[-1].status_code,
-                url=sprint_list_resps[-1].request.url
-            ))
+            self.log_http(sprint_list_resps[-1])
+
         return {'success': True, 'id': board_json['id'], 'name': board_json['name']}
 
     def post_slack_msg(self, text, webhook_url=None, channel=None, icon_emoji=None, username=None):
