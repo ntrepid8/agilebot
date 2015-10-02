@@ -22,16 +22,21 @@ class AgileBot(object):
                  slack_channel=None,
                  slack_icon_emoji=None,
                  slack_username=None):
+
+        # agile
         self._boards = None
-        self.trello_oauth = OAuth1(
+
+        # trello
+        trello_conf_class = namedtuple('TrelloConf', 'organization_id, session')
+        self.trello = trello_conf_class(
+            organization_id=trello_organization_id,
+            session=requests.Session())
+        self.trello.session.auth = OAuth1(
             client_key=trello_api_key,
             client_secret=trello_api_secret,
             resource_owner_key=trello_oauth_token,
             resource_owner_secret=trello_oauth_secret)
-        self.trello_session = requests.session()
-        self.trello_session.auth = self.trello_oauth
-        self.trello_session.headers['Accept'] = 'application/json'
-        self.trello_organization_id = trello_organization_id
+        self.trello.session.headers['Accept'] = 'application/json'
 
         # slack
         slack_class = namedtuple('SlackConf', 'webhook_url, channel, icon_emoji, username')
@@ -58,7 +63,7 @@ class AgileBot(object):
         }
         if filter_params:
             query_params['filter'] = ','.join(filter_params)
-        resp = self.trello_session.get(''.join(url), params=query_params)
+        resp = self.trello.session.get(''.join(url), params=query_params)
         logger.debug('{method} {code} {url}'.format(
             method=resp.request.method,
             code=resp.status_code,
