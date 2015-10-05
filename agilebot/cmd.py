@@ -4,13 +4,14 @@ import os
 import sys
 import pytoml as toml
 import logging
-import collections
+from copy import copy
 from colorlog import ColoredFormatter
 from agilebot import (
     agilebot,
     cmd_boards,
     cmd_slack,
-    cmd_sprint
+    cmd_sprint,
+    util
 )
 
 CONFIG_PATH = os.path.expanduser('~/.agilebot.toml')
@@ -34,16 +35,6 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-def merge(dict_0, dict_1):
-    for d1_key, d1_val in dict_1.items():
-        if isinstance(d1_val, collections.Mapping):
-            r = merge(dict_0.get(d1_key, {}), d1_val)
-            dict_0[d1_key] = r
-        else:
-            dict_0[d1_key] = dict_1[d1_key]
-    return dict_0
-
-
 def get_first_value(*args):
     return next((i for i in args if i is not None), None)
 
@@ -54,34 +45,14 @@ def cmd_main(args, bot):
 
 def main():
     # config
-    conf = {
-        'trello': {
-            'api_key': None,
-            'api_secret': None,
-            'oauth_token': None,
-            'oauth_secret': None,
-            'organization_id': None
-        },
-        'agile': {
-            'backlogs': [],
-            'sprint_lists': ['To Do', 'In Progress', 'Completed', 'Deployed']
-        },
-        'slack': {
-            'webhook_url': None,
-            'channel': None,
-            'icon_emoji': ':ghost:',
-            'username': 'agilebot'
-        },
-        'logging': {
-            'level': 'INFO'
-        }
-    }
+    default_conf = agilebot.AgileBot.default_conf()
+    conf = copy(default_conf)
 
     # config file
     if os.path.isfile(CONFIG_PATH):
         with open(CONFIG_PATH, 'r') as f:
             toml_config = toml.load(f)
-            conf = merge(conf, toml_config)
+            conf = util.left_merge(default_conf, toml_config)
 
     # logging conf
     logger.setLevel(conf['logging']['level'])
@@ -154,19 +125,27 @@ def main():
         ),
     )
 
+    # parse the arguments
     args = parser.parse_args()
-    bot = agilebot.AgileBot(
-        trello_api_key=args.trello_api_key,
-        trello_api_secret=args.trello_api_secret,
-        trello_oauth_token=args.trello_oauth_token,
-        trello_oauth_secret=args.trello_oauth_secret,
-        trello_organization_id=args.trello_organization_id,
-        slack_webhook_url=args.slack_webhook_url,
-        slack_channel=args.slack_channel,
-        slack_icon_emoji=args.slack_icon_emoji,
-        slack_username=args.slack_username,
-        agile_sprint_lists=args.agile_sprint_lists
-    )
+
+    # agile
+    conf['agile']['sprint_lists'] = args.agile_sprint_lists
+
+    # slack
+    conf['slack']['channel'] = args.slack_channel
+    conf['slack']['icon_emoji'] = args.slack_icon_emoji
+    conf['slack']['username'] = args.slack_username
+    conf['slack']['webhook_url'] = args.slack_webhook_url
+
+    # trello
+    conf['trello']['api_key'] = args.trello_api_key
+    conf['trello']['api_secret'] = args.trello_api_secret
+    conf['trello']['oauth_secret'] = args.trello_oauth_secret
+    conf['trello']['oauth_token'] = args.trello_oauth_token
+    conf['trello']['organization_id'] = args.trello_organization_id
+
+    # create the bot
+    bot = agilebot.AgileBot(**conf)
 
     if args.conf:
         # show current config

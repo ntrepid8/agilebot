@@ -37,5 +37,5 @@ def left_merge(left, right):
             if isinstance(v, Mapping):
                 new_left[k] = left_merge(left[k], right.get(k, {}))
             else:
-                new_left[k] = right.get(k, left[k])
+                new_left[k] = right.get(k) or left[k]
         return new_left
