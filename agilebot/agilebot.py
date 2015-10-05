@@ -216,7 +216,8 @@ class AgileBot(object):
             'text': text,
             'channel': channel or self.slack.channel,
             'icon_emoji': icon_emoji or self.slack.icon_emoji,
-            'username': username or self.slack.username
+            'username': username or self.slack.username,
+            'link_names': 1
         }
         for k, v in data.items():
             if not v:
