@@ -62,6 +62,8 @@ class AgileBot(object):
                     query_params=None,
                     include_lists=False,
                     include_cards=False):
+        # TODO - move this to trello.bot
+
         # build URL
         url = [TRELLO_API_BASE_URL, '/members/me/boards']
 
@@ -110,6 +112,8 @@ class AgileBot(object):
         return resp_json
 
     def add_cards_to_board(self, board):
+        # TODO - move this to trello.bot
+
         cards = self.find_cards(board['id'])
         for c in cards:
             for l in board['lists']:
@@ -121,6 +125,8 @@ class AgileBot(object):
         return board
 
     def find_cards(self, board_id):
+        # TODO - move this to trello.bot
+
         url = [TRELLO_API_BASE_URL, '/boards/{board_id}/cards'.format(board_id=board_id)]
         resp = self.trello.session.get(''.join(url))
         self.log_http(resp)
@@ -139,6 +145,7 @@ class AgileBot(object):
         return sprint_name.format(**sn_kwargs)
 
     def create_sprint(self, name=None, sprint_list_names=None, organization_id=None):
+        # TODO - move this to trello.bot
 
         # render the name
         sprint_name = self.format_sprint_name(name or 'Sprint {iso_year}.{iso_week}')
