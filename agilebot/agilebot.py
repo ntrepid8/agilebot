@@ -3,6 +3,7 @@ import requests
 from requests_oauthlib import OAuth1
 import logging
 from logging import NullHandler
+import collections
 from collections import namedtuple
 import json
 from fnmatch import fnmatch
@@ -15,45 +16,79 @@ TRELLO_API_BASE_URL = 'https://api.trello.com/1'
 
 class AgileBot(object):
 
-    def __init__(self,
-                 trello_api_key,
-                 trello_api_secret,
-                 trello_oauth_token,
-                 trello_oauth_secret,
-                 trello_organization_id=None,
-                 slack_webhook_url=None,
-                 slack_channel=None,
-                 slack_icon_emoji=None,
-                 slack_username=None,
-                 agile_sprint_lists=None):
+    def __init__(self, **kwargs):
+
+        self.default_conf = {
+            'agile': {
+                'backlogs': [],
+                'sprint_lists': ['To Do', 'In Progress', 'Completed', 'Deployed']
+            },
+            'logging': {
+                'level': 'INFO'
+            },
+            'slack': {
+                'webhook_url': None,
+                'channel': None,
+                'icon_emoji': ':ghost:',
+                'username': 'agilebot'
+            },
+            'trello': {
+                'api_key': None,
+                'api_secret': None,
+                'oauth_token': None,
+                'oauth_secret': None,
+                'organization_id': None
+            },
+        }
+
+        self.conf = self.left_merge(self.default_conf, kwargs)
 
         # agile
-        agile_conf_class = namedtuple('AgileConf', 'sprint_lists')
-        self.agile = agile_conf_class(
-            sprint_lists=agile_sprint_lists
-        )
+        self.agile = self.gen_namedtuple('Agile', self.conf['agile'])
         self._boards = None
 
         # trello
-        trello_conf_class = namedtuple('TrelloConf', 'organization_id, session')
-        self.trello = trello_conf_class(
-            organization_id=trello_organization_id,
-            session=requests.Session())
+        self.trello = self.gen_namedtuple('Trello', self.conf['trello'], dict(
+            session=requests.Session()
+        ))
         self.trello.session.auth = OAuth1(
-            client_key=trello_api_key,
-            client_secret=trello_api_secret,
-            resource_owner_key=trello_oauth_token,
-            resource_owner_secret=trello_oauth_secret)
+            client_key=self.trello.api_key,
+            client_secret=self.trello.api_secret,
+            resource_owner_key=self.trello.oauth_token,
+            resource_owner_secret=self.trello.oauth_secret)
         self.trello.session.headers['Accept'] = 'application/json'
 
         # slack
-        slack_class = namedtuple('SlackConf', 'webhook_url, channel, icon_emoji, username')
-        self.slack = slack_class(
-            webhook_url=slack_webhook_url,
-            channel=slack_channel,
-            icon_emoji=slack_icon_emoji,
-            username=slack_username
-        )
+        self.slack = self.gen_namedtuple('Slack', self.conf['slack'])
+
+    def left_merge(self, left, right):
+        """ Update values in the left dictionary from the values in the right dictionary, if they exist.
+        Another way to phrase it would be:
+
+        - copy `left` as a new dictionary called `d`
+        - recursively update `d` with the intersection of right & left
+
+        :param left: starting dictionary
+        :type left: dict
+        :param right: dictionary to be intersected and merged
+        :type right: dict
+        :return: copy of left, merged with the recursive intersection of left & right
+        :rtype: dict
+        """
+        new_left = {}
+        for k, v in left.items():
+            if isinstance(v, collections.Mapping):
+                new_left[k] = self.left_merge(left[k], right.get(k, {}))
+            else:
+                new_left[k] = right.get(k, left[k])
+        return new_left
+
+    def gen_namedtuple(self, name, *param_dicts):
+        nt_param_dict = {}
+        for pd in param_dicts:
+            nt_param_dict.update(pd)
+        nt_class = namedtuple(name, ', '.join(k for k in nt_param_dict.keys()))
+        return nt_class(**nt_param_dict)
 
     @property
     def boards(self):
