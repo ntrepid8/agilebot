@@ -148,13 +148,15 @@ class AgileBot(object):
         if duplicates:
             raise ValueError('duplicate board name: "{}"'.format(sprint_name))
 
+        # create the sprint board
         board_url = [TRELLO_API_BASE_URL, '/boards']
         board_data = {
             'name': sprint_name
         }
-        org_id = organization_id or self.trello.organization_id
+        org_id = organization_id or self.trello.conf.organization_id
         if org_id:
             board_data['idOrganization'] = org_id
+            board_data['prefs_permissionLevel'] = 'org'
         board_resp = self.trello.session.post(
             ''.join(board_url),
             headers={'Content-Type': 'application/json'},
