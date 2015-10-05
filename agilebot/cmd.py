@@ -100,6 +100,7 @@ def main():
     parser.add_argument('--trello-api-secret', help='your Trello API secret')
     parser.add_argument('--trello-oauth-token', help='your Trello OAuth access token')
     parser.add_argument('--trello-oauth-secret', help='your Trello OAuth access secret')
+    parser.add_argument('--conf', action='store_true', default=False, help='print current configuration')
 
     # boards sub-command
     sub_commands = {
@@ -110,6 +111,7 @@ def main():
 
     # set defaults, ENV var first, then config file, then command line args
     parser.set_defaults(
+        func=cmd_main,
         trello_api_key=get_first_value(
             os.environ.get('TRELLO_API_KEY'),
             conf['trello']['api_key']
@@ -166,14 +168,18 @@ def main():
         agile_sprint_lists=args.agile_sprint_lists
     )
 
-    if not getattr(args, 'func', None):
+    if args.conf:
+        # show current config
+        print(toml.dumps(conf, sort_keys=True))
+    elif not getattr(args, 'func', None):
         if hasattr(args, 'func_help'):
             func_help = args.func_help
         else:
             func_help = parser.print_help
         func_help()
         sys.exit(1)
-    args.func(args, bot)
+    else:
+        args.func(args, bot)
 
 
 if __name__ == '__main__':
