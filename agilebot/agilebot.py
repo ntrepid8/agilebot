@@ -9,6 +9,7 @@ import json
 from fnmatch import fnmatch
 from datetime import date
 from agilebot import util
+from agilebot.trello.bot import TrelloBot
 logger = logging.getLogger('agilebot.lib')
 logger.addHandler(NullHandler())
 TRELLO_API_BASE_URL = 'https://api.trello.com/1'
@@ -18,7 +19,21 @@ class AgileBot(object):
 
     def __init__(self, **kwargs):
 
-        self.default_conf = {
+        self.conf = util.left_merge(self.default_conf(), kwargs)
+
+        # agile
+        self.agile = util.gen_namedtuple('Agile', self.conf['agile'])
+        self._boards = None
+
+        # trello
+        self.trello = TrelloBot(kwargs.get('trello'))
+
+        # slack
+        self.slack = util.gen_namedtuple('Slack', self.conf['slack'])
+
+    @classmethod
+    def default_conf(cls):
+        return {
             'agile': {
                 'backlogs': [],
                 'sprint_lists': ['To Do', 'In Progress', 'Completed', 'Deployed']
@@ -32,63 +47,8 @@ class AgileBot(object):
                 'icon_emoji': ':ghost:',
                 'username': 'agilebot'
             },
-            'trello': {
-                'api_key': None,
-                'api_secret': None,
-                'oauth_token': None,
-                'oauth_secret': None,
-                'organization_id': None
-            },
+            'trello': TrelloBot.default_conf(),
         }
-
-        self.conf = self.left_merge(self.default_conf, kwargs)
-
-        # agile
-        self.agile = self.gen_namedtuple('Agile', self.conf['agile'])
-        self._boards = None
-
-        # trello
-        self.trello = self.gen_namedtuple('Trello', self.conf['trello'], dict(
-            session=requests.Session()
-        ))
-        self.trello.session.auth = OAuth1(
-            client_key=self.trello.api_key,
-            client_secret=self.trello.api_secret,
-            resource_owner_key=self.trello.oauth_token,
-            resource_owner_secret=self.trello.oauth_secret)
-        self.trello.session.headers['Accept'] = 'application/json'
-
-        # slack
-        self.slack = self.gen_namedtuple('Slack', self.conf['slack'])
-
-    def left_merge(self, left, right):
-        """ Update values in the left dictionary from the values in the right dictionary, if they exist.
-        Another way to phrase it would be:
-
-        - copy `left` as a new dictionary called `d`
-        - recursively update `d` with the intersection of right & left
-
-        :param left: starting dictionary
-        :type left: dict
-        :param right: dictionary to be intersected and merged
-        :type right: dict
-        :return: copy of left, merged with the recursive intersection of left & right
-        :rtype: dict
-        """
-        new_left = {}
-        for k, v in left.items():
-            if isinstance(v, collections.Mapping):
-                new_left[k] = self.left_merge(left[k], right.get(k, {}))
-            else:
-                new_left[k] = right.get(k, left[k])
-        return new_left
-
-    def gen_namedtuple(self, name, *param_dicts):
-        nt_param_dict = {}
-        for pd in param_dicts:
-            nt_param_dict.update(pd)
-        nt_class = namedtuple(name, ', '.join(k for k in nt_param_dict.keys()))
-        return nt_class(**nt_param_dict)
 
     @property
     def boards(self):
