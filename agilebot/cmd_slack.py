@@ -1,14 +1,13 @@
 __author__ = 'ntrepid8'
 import logging
 from logging import NullHandler
-import sys
 import json
 logger = logging.getLogger('agilebot.slack')
 logger.addHandler(NullHandler())
 
 
 def cmd_slack_post(args, bot):
-    resp = bot.post_slack_msg(
+    resp = bot.slack.post_msg(
         text=args.text,
         webhook_url=args.webhook_url,
         channel=args.channel,

@@ -10,6 +10,7 @@ from fnmatch import fnmatch
 from datetime import date
 from agilebot import util
 from agilebot.trello.bot import TrelloBot
+from agilebot.slack.bot import SlackBot
 logger = logging.getLogger('agilebot.lib')
 logger.addHandler(NullHandler())
 TRELLO_API_BASE_URL = 'https://api.trello.com/1'
@@ -29,7 +30,7 @@ class AgileBot(object):
         self.trello = TrelloBot(kwargs.get('trello'))
 
         # slack
-        self.slack = util.gen_namedtuple('Slack', self.conf['slack'])
+        self.slack = SlackBot(kwargs.get('slack'))
 
     @classmethod
     def default_conf(cls):
@@ -41,12 +42,7 @@ class AgileBot(object):
             'logging': {
                 'level': 'INFO'
             },
-            'slack': {
-                'webhook_url': None,
-                'channel': None,
-                'icon_emoji': ':ghost:',
-                'username': 'agilebot'
-            },
+            'slack': SlackBot.default_conf(),
             'trello': TrelloBot.default_conf(),
         }
 
@@ -206,27 +202,3 @@ class AgileBot(object):
 
         return {'success': True, 'id': board_json['id'], 'name': board_json['name']}
 
-    def post_slack_msg(self, text, webhook_url=None, channel=None, icon_emoji=None, username=None):
-        data = {
-            'text': text,
-            'channel': channel or self.slack.channel,
-            'icon_emoji': icon_emoji or self.slack.icon_emoji,
-            'username': username or self.slack.username,
-            'link_names': 1
-        }
-        for k, v in data.items():
-            if not v:
-                raise ValueError('invalid {key}: {value}'.format(
-                    key=k,
-                    value=v
-                ))
-        webhook_url = webhook_url or self.slack.webhook_url
-        if not webhook_url:
-            raise ValueError('webhook_url is required')
-        resp = requests.post(
-            webhook_url,
-            headers={'Content-Type': 'application/json'},
-            data=json.dumps(data))
-        if resp.status_code != requests.codes.ok:
-            raise ValueError('http error: {}'.format(resp.status_code))
-        return {'success': True}
