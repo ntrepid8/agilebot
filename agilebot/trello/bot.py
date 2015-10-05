@@ -1,5 +1,4 @@
 __author__ = 'ntrepid8'
-from collections import namedtuple
 from requests_oauthlib import OAuth1
 import requests
 from agilebot import util

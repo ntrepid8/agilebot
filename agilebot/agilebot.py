@@ -1,10 +1,7 @@
 __author__ = 'ntrepid8'
 import requests
-from requests_oauthlib import OAuth1
 import logging
 from logging import NullHandler
-import collections
-from collections import namedtuple
 import json
 from fnmatch import fnmatch
 from datetime import date
