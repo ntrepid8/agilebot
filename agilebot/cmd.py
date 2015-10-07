@@ -39,10 +39,6 @@ def get_first_value(*args):
     return next((i for i in args if i is not None), None)
 
 
-def cmd_main(args, bot):
-    pass
-
-
 def main():
     # config
     default_conf = agilebot.AgileBot.default_conf()
@@ -56,6 +52,7 @@ def main():
 
     # logging conf
     logger.setLevel(conf['logging']['level'])
+    logger.debug('log level: {}'.format(conf['logging']['level']))
 
     # library logging config
     lib_log_level = logging.CRITICAL
@@ -82,7 +79,8 @@ def main():
 
     # set defaults, ENV var first, then config file, then command line args
     parser.set_defaults(
-        func=cmd_main,
+        func=None,
+        func_help=parser.print_help,
         trello_api_key=get_first_value(
             os.environ.get('TRELLO_API_KEY'),
             conf['trello']['api_key']
@@ -147,10 +145,15 @@ def main():
     # create the bot
     bot = agilebot.AgileBot(**conf)
 
-    if args.conf:
+    logger.debug('sys.argv: {}'.format(len(sys.argv)))
+    if not len(sys.argv) > 1:
+        # no arguments given, show help
+        parser.print_help()
+    elif args.conf:
         # show current config
         print(toml.dumps(conf, sort_keys=True))
     elif not getattr(args, 'func', None):
+        # if the sub-command function is not set, show help
         if hasattr(args, 'func_help'):
             func_help = args.func_help
         else:
@@ -158,6 +161,7 @@ def main():
         func_help()
         sys.exit(1)
     else:
+        # run the sub-command
         args.func(args, bot)
 
 
