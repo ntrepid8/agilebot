@@ -75,4 +75,4 @@ def sub_command(main_subparsers):
         '--name',
         default='Sprint {iso_year}.{iso_week}',
         help='sprint board name (supports *patterns* and templates: {iso_year}, {iso_week})')
-    parser_create.set_defaults(func=cmd_sprint_create, func_help=parser_create.print_helpaddad)
+    parser_create.set_defaults(func=cmd_sprint_create, func_help=parser_create.print_help)
