@@ -147,23 +147,30 @@ def main():
     # create the bot
     bot = agilebot.AgileBot(**conf)
 
-    logger.debug('sys.argv: {}'.format(len(sys.argv)))
     if not len(sys.argv) > 1:
         # no arguments given, show help
+        logger.debug('sys.argv: {}'.format(len(sys.argv)))
         parser.print_help()
     elif args.conf:
         # show current config
+        logger.debug('printing current configuration')
         print(toml.dumps(conf, sort_keys=True))
     elif not getattr(args, 'func', None):
         # if the sub-command function is not set, show help
+        logger.debug('sub-command function not found')
         if hasattr(args, 'func_help'):
+            logger.debug('show sub-command specific help')
             func_help = args.func_help
         else:
+            logger.debug('show general help')
             func_help = parser.print_help
         func_help()
         sys.exit(1)
     else:
         # run the sub-command
+        sc_0 = getattr(args, 'subparser_0', '')
+        sc_1 = getattr(args, 'subparser_1', '')
+        logger.debug('executing: agilebot {} {}'.format(sc_0, sc_1))
         args.func(args, bot)
 
 
