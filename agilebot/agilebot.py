@@ -24,7 +24,10 @@ class AgileBot(object):
         self._boards = None
 
         # trello
-        self.trello = TrelloBot(kwargs.get('trello'))
+        try:
+            self.trello = TrelloBot(kwargs.get('trello'))
+        except Exception as e:
+            raise ValueError('trello {}'.format(e))
 
         # slack
         self.slack = SlackBot(kwargs.get('slack'))

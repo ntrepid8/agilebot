@@ -146,7 +146,13 @@ def main():
     conf['trello']['organization_id'] = args.trello_organization_id
 
     # create the bot
-    bot = agilebot.AgileBot(**conf)
+    try:
+        bot = agilebot.AgileBot(**conf)
+    except Exception as e:
+        logger.error('{}'.format(e))
+        sys.exit(1)
+    else:
+        logger.debug('AgileBot created successfully')
 
     if not len(sys.argv) > 1:
         # no arguments given, show help

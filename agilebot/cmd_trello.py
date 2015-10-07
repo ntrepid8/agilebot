@@ -7,36 +7,26 @@ logger = logging.getLogger('agilebot.trello')
 logger.addHandler(NullHandler())
 
 
-def cmd_trello(args, bot):
-    logger.debug('CMD trello')
-
-
-def find_trello(args, bot):
-    # search args
-    search_args = []
-    if args.closed:
-        search_args.append('closed')
-    else:
-        search_args.append('open')
-
+def cmd_trello_get_board(args, bot):
+    logger.debug('CMD trello get-board')
     try:
-        resp = bot.find_trello(search_args, organization_id=args.organization_id, name=args.name)
+        board = bot.trello.get_board(board_id=args.board_id)
     except Exception as e:
         logger.error('{}'.format(e))
         sys.exit(1)
     else:
-        return resp
+        print(json.dumps(board))
 
 
-def cmd_trello_get_board(args, bot):
-    logger.debug('CMD trello get-board')
-    board = bot.trello.get_board(args.board_id)
-    print(json.dumps(board))
-
-
-def cmd_trello_find(args, bot):
+def cmd_trello_find_boards(args, bot):
     logger.debug('CMD trello find')
-    print(json.dumps(find_trello(args, bot)))
+    try:
+        boards = bot.trello.find_boards(name=args.board_name)
+    except Exception as e:
+        logger.error('{}'.format(e))
+        sys.exit(1)
+    else:
+        print(json.dumps(boards))
 
 
 def sub_command(main_subparsers):
@@ -46,8 +36,14 @@ def sub_command(main_subparsers):
     trello_parser.set_defaults(func_help=trello_parser.print_help)
 
     # get_board command
-    parser_list = board_subparsers.add_parser('get-board', help='get a board by Id')
-    parser_list.add_argument('--board-id', default=None, help='list organization trello')
-    parser_list.set_defaults(func=cmd_trello_get_board)
+    parser_get_board = board_subparsers.add_parser('get-board', help='get a board by Id')
+    parser_get_board.add_argument('--board-id', default=None, help='board Id')
+    parser_get_board.set_defaults(func=cmd_trello_get_board)
+    
+    # find_boards command
+    parser_find_boards = board_subparsers.add_parser('find-boards', help='search for boards')
+    parser_find_boards.add_argument(
+        '--board-name', default=None, help='board name (supports Unix style pattern matching)')
+    parser_find_boards.set_defaults(func=cmd_trello_find_boards)
 
     return trello_parser

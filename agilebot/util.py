@@ -1,8 +1,19 @@
 __author__ = 'ntrepid8'
 from collections import namedtuple, Mapping
+import os
+import requests
+import calendar
+import time
+DUMP_PATH = '/tmp/agilebot_dumps'
 
 
 def log_request_response(resp, logger):
+    if resp.status_code != requests.codes.ok:
+        if not os.path.exists(DUMP_PATH):
+            os.makedirs(DUMP_PATH)
+        dp_kwargs = dict(dump_path=DUMP_PATH, code=resp.status_code, time_stamp=calendar.timegm(time.gmtime()))
+        with open('{dump_path}/{method}_{code}_{time_stamp}.log'.format(**dp_kwargs), 'w') as f:
+            f.write(vars(resp))
     logger.debug('{method} {code} {url}'.format(
         method=resp.request.method,
         code=resp.status_code,
