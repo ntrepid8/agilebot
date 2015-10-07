@@ -52,8 +52,9 @@ def main():
             conf = util.left_merge(default_conf, toml_config)
 
     # logging conf
-    logger.setLevel(conf['logging']['level'])
-    logger.debug('log level: {}'.format(conf['logging']['level']))
+    log_level = os.environ.get('AGILEBOT_LOG_LEVEL') or conf['logging']['level']
+    logger.setLevel(log_level)
+    logger.info('log level: {}'.format(log_level))
 
     # library logging config
     lib_log_level = logging.CRITICAL
