@@ -66,7 +66,7 @@ def sub_command(main_subparsers):
     parser_info.add_argument('--active', action='store_true', help='info about the active sprint')
     parser_info.add_argument('--organization-id', default=None, help='organization id')
     parser_info.add_argument('--name', default='Sprint*', help='sprint board name (supports *patterns*)')
-    parser_info.set_defaults(func=cmd_sprint_info)
+    parser_info.set_defaults(func=cmd_sprint_info, func_help=parser_info.print_help)
     
     # create command
     parser_create = sprint_subparsers.add_parser('create', help='show create about sprints')
@@ -75,4 +75,4 @@ def sub_command(main_subparsers):
         '--name',
         default='Sprint {iso_year}.{iso_week}',
         help='sprint board name (supports *patterns* and templates: {iso_year}, {iso_week})')
-    parser_create.set_defaults(func=cmd_sprint_create)
+    parser_create.set_defaults(func=cmd_sprint_create, func_help=parser_create.print_helpaddad)
