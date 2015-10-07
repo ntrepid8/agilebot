@@ -11,6 +11,7 @@ from agilebot import (
     cmd_boards,
     cmd_slack,
     cmd_sprint,
+    cmd_trello,
     util
 )
 
@@ -74,7 +75,8 @@ def main():
     sub_commands = {
         'boards': cmd_boards.sub_command(subparsers),
         'slack': cmd_slack.sub_command(subparsers),
-        'sprint': cmd_sprint.sub_command(subparsers)
+        'sprint': cmd_sprint.sub_command(subparsers),
+        'trello': cmd_trello.sub_command(subparsers)
     }
 
     # set defaults, ENV var first, then config file, then command line args
