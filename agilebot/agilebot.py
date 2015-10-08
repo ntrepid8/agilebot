@@ -11,6 +11,7 @@ from agilebot.slack.bot import SlackBot
 logger = logging.getLogger('agilebot.lib')
 logger.addHandler(NullHandler())
 TRELLO_API_BASE_URL = 'https://api.trello.com/1'
+DEFAULT_SPRINT_NAME_TPL = 'Sprint {iso_year}.{iso_week}'
 
 
 class AgileBot(object):
@@ -41,6 +42,9 @@ class AgileBot(object):
             },
             'logging': {
                 'level': 'INFO'
+            },
+            'sprint': {
+                'name_tpl': DEFAULT_SPRINT_NAME_TPL
             },
             'slack': SlackBot.default_conf(),
             'trello': TrelloBot.default_conf(),
@@ -139,7 +143,8 @@ class AgileBot(object):
         resp_json = resp.json()
         return resp_json
 
-    def format_sprint_name(self, sprint_name, iso_year=None, iso_week=None):
+    def format_sprint_name(self, sprint_name=None, iso_year=None, iso_week=None):
+        sprint_name = sprint_name or DEFAULT_SPRINT_NAME_TPL
         iso_date = date.today().isocalendar()
         sn_kwargs = dict(
             iso_year=iso_year or iso_date[0],
@@ -151,7 +156,7 @@ class AgileBot(object):
         # TODO - move this to trello.bot
 
         # render the name
-        sprint_name = self.format_sprint_name(name or 'Sprint {iso_year}.{iso_week}')
+        sprint_name = self.format_sprint_name(name or DEFAULT_SPRINT_NAME_TPL)
 
         # check for duplicate names
         duplicates = self.find_boards(name=sprint_name, organization_id=organization_id)

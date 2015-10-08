@@ -3,6 +3,8 @@ import logging
 from logging import NullHandler
 import sys
 import json
+import argparse
+from agilebot import util
 logger = logging.getLogger('agilebot.sprint')
 logger.addHandler(NullHandler())
 ACTIVE_PATTERN = '*(active)'
@@ -54,6 +56,19 @@ def cmd_sprint_create(args, bot):
         print(json.dumps(resp))
 
 
+def cmd_render_name(args, conf):
+    logger.debug('CMD sprint render-name')
+    try:
+        conf = util.update_config_group('sprint', args, conf)
+        bot = util.create_bot(conf, logger)
+        rendered_name = bot.format_sprint_name(args.sprint_name)
+    except Exception as e:
+        logger.error('{}'.format(e))
+        sys.exit(1)
+    else:
+        print(rendered_name)
+
+
 def sub_command(main_subparsers):
 
     # sprint command
@@ -76,3 +91,19 @@ def sub_command(main_subparsers):
         default='Sprint {iso_year}.{iso_week}',
         help='sprint board name (supports *patterns* and templates: {iso_year}, {iso_week})')
     parser_create.set_defaults(func=cmd_sprint_create, func_help=parser_create.print_help)
+
+    #
+    # SUB-COMMAND: render-name (rn)
+    rn_desc = 'render a sprint board name'
+    rn_parser = sprint_subparsers.add_parser(
+        'render-name',
+        aliases=['rn'],
+        description=rn_desc,
+        formatter_class=argparse.MetavarTypeHelpFormatter,
+        help=rn_desc)
+
+    # rn optional arguments
+    rn_parser.add_argument('--sprint-name', type=str, help='sprint name')
+
+    # rn defaults
+    rn_parser.set_defaults(func=cmd_render_name, func_help=rn_parser.print_help)
