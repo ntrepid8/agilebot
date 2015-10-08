@@ -63,7 +63,8 @@ def main():
     logging.getLogger('requests_oauthlib').setLevel(lib_log_level)
 
     # command line args
-    parser = argparse.ArgumentParser(description='Automate functions for Agile development sprints.')
+    parser = argparse.ArgumentParser(
+        description='Automate functions for Agile development sprints.')
     subparsers = parser.add_subparsers(help='sub-command help', dest='subparser_0')
     parser.add_argument('--trello-organization-id', help='organization ID in Trello')
     parser.add_argument('--trello-api-key', help='your Trello API key')
