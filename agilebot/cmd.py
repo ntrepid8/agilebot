@@ -79,7 +79,7 @@ def main():
         'boards': cmd_boards.sub_command(subparsers),
         'slack': cmd_slack.sub_command(subparsers),
         'sprint': cmd_sprint.sub_command(subparsers),
-        'trello': cmd_trello.sub_command(subparsers, conf)
+        'trello': cmd_trello.sub_command(subparsers)
     }
 
     # set defaults, ENV var first, then config file, then command line args
@@ -106,22 +106,22 @@ def main():
         #     os.environ.get('TRELLO_ORGANIZATION_ID'),
         #     conf['trello']['organization_id']
         # ),
-        slack_webhook_url=get_first_value(
-            os.environ.get('SLACK_WEBHOOK_URL'),
-            conf['slack']['webhook_url']
-        ),
-        slack_channel=get_first_value(
-            os.environ.get('SLACK_CHANNEL'),
-            conf['slack']['channel']
-        ),
-        slack_icon_emoji=get_first_value(
-            os.environ.get('SLACK_ICON_EMOJI'),
-            conf['slack']['icon_emoji']
-        ),
-        slack_username=get_first_value(
-            os.environ.get('SLACK_USERNAME'),
-            conf['slack']['username']
-        ),
+        # slack_webhook_url=get_first_value(
+        #     os.environ.get('SLACK_WEBHOOK_URL'),
+        #     conf['slack']['webhook_url']
+        # ),
+        # slack_channel=get_first_value(
+        #     os.environ.get('SLACK_CHANNEL'),
+        #     conf['slack']['channel']
+        # ),
+        # slack_icon_emoji=get_first_value(
+        #     os.environ.get('SLACK_ICON_EMOJI'),
+        #     conf['slack']['icon_emoji']
+        # ),
+        # slack_username=get_first_value(
+        #     os.environ.get('SLACK_USERNAME'),
+        #     conf['slack']['username']
+        # ),
         agile_sprint_lists=get_first_value(
             os.environ.get('AGILE_SPRINT_LISTS'),
             conf['agile']['sprint_lists']
@@ -130,24 +130,28 @@ def main():
 
     # parse the arguments
     args = parser.parse_args()
+    sc_0 = getattr(args, 'subparser_0', '')
+    sc_1 = getattr(args, 'subparser_1', '')
+    logger.debug('subparser_0: {}'.format(sc_0))
+    logger.debug('subparser_1: {}'.format(sc_1))
 
     # agile
     conf['agile']['sprint_lists'] = args.agile_sprint_lists
 
-    # slack
-    conf['slack']['channel'] = args.slack_channel
-    conf['slack']['icon_emoji'] = args.slack_icon_emoji
-    conf['slack']['username'] = args.slack_username
-    conf['slack']['webhook_url'] = args.slack_webhook_url
+    # # slack
+    # conf['slack']['channel'] = args.slack_channel
+    # conf['slack']['icon_emoji'] = args.slack_icon_emoji
+    # conf['slack']['username'] = args.slack_username
+    # conf['slack']['webhook_url'] = args.slack_webhook_url
 
-    # trello
+    # # trello
     # conf['trello']['api_key'] = args.trello_api_key
     # conf['trello']['api_secret'] = args.trello_api_secret
     # conf['trello']['oauth_secret'] = args.trello_oauth_secret
     # conf['trello']['oauth_token'] = args.trello_oauth_token
     # conf['trello']['organization_id'] = args.trello_organization_id
 
-    # create the bot
+    # # create the bot
     # try:
     #     bot = agilebot.AgileBot(**conf)
     # except Exception as e:
@@ -177,8 +181,6 @@ def main():
         sys.exit(1)
     else:
         # run the sub-command
-        sc_0 = getattr(args, 'subparser_0', '')
-        sc_1 = getattr(args, 'subparser_1', '')
         logger.debug('executing: agilebot {} {}'.format(sc_0, sc_1))
         args.func(args, conf)
 

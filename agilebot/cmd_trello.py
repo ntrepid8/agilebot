@@ -60,7 +60,7 @@ def cmd_trello_create_board(args, conf):
         print(json.dumps(board))
 
 
-def sub_command(main_subparsers, conf):
+def sub_command(main_subparsers):
     # trello sub-command
     trello_parser = main_subparsers.add_parser('trello', help='interact with trello')
     trello_subparsers = trello_parser.add_subparsers(help='sub-commands', dest='subparser_1')
