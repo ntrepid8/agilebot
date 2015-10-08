@@ -16,7 +16,7 @@ from agilebot import (
 )
 
 CONFIG_PATH = os.path.expanduser('~/.agilebot.toml')
-logger = logging.getLogger()
+root_logger = logging.getLogger()
 handler = logging.StreamHandler()
 formatter = ColoredFormatter(
     "%(log_color)s[%(levelname)s (%(asctime)s) %(name)s]%(reset)s %(message)s",
@@ -33,7 +33,8 @@ formatter = ColoredFormatter(
     style='%'
 )
 handler.setFormatter(formatter)
-logger.addHandler(handler)
+root_logger.addHandler(handler)
+logger = logging.getLogger('agilebot')
 
 
 def get_first_value(*args):
@@ -66,11 +67,11 @@ def main():
     parser = argparse.ArgumentParser(
         description='Automate functions for Agile development sprints.')
     subparsers = parser.add_subparsers(help='sub-command help', dest='subparser_0')
-    parser.add_argument('--trello-organization-id', help='organization ID in Trello')
-    parser.add_argument('--trello-api-key', help='your Trello API key')
-    parser.add_argument('--trello-api-secret', help='your Trello API secret')
-    parser.add_argument('--trello-oauth-token', help='your Trello OAuth access token')
-    parser.add_argument('--trello-oauth-secret', help='your Trello OAuth access secret')
+    # parser.add_argument('--trello-organization-id', help='organization ID in Trello')
+    # parser.add_argument('--trello-api-key', help='your Trello API key')
+    # parser.add_argument('--trello-api-secret', help='your Trello API secret')
+    # parser.add_argument('--trello-oauth-token', help='your Trello OAuth access token')
+    # parser.add_argument('--trello-oauth-secret', help='your Trello OAuth access secret')
     parser.add_argument('--conf', action='store_true', default=False, help='print current configuration')
 
     # boards sub-command
@@ -78,33 +79,33 @@ def main():
         'boards': cmd_boards.sub_command(subparsers),
         'slack': cmd_slack.sub_command(subparsers),
         'sprint': cmd_sprint.sub_command(subparsers),
-        'trello': cmd_trello.sub_command(subparsers)
+        'trello': cmd_trello.sub_command(subparsers, conf)
     }
 
     # set defaults, ENV var first, then config file, then command line args
     parser.set_defaults(
         func=None,
         func_help=parser.print_help,
-        trello_api_key=get_first_value(
-            os.environ.get('TRELLO_API_KEY'),
-            conf['trello']['api_key']
-        ),
-        trello_api_secret=get_first_value(
-            os.environ.get('TRELLO_API_SECRET'),
-            conf['trello']['api_secret']
-        ),
-        trello_oauth_token=get_first_value(
-            os.environ.get('TRELLO_OAUTH_TOKEN'),
-            conf['trello']['oauth_token']
-        ),
-        trello_oauth_secret=get_first_value(
-            os.environ.get('TRELLO_OAUTH_SECRET'),
-            conf['trello']['oauth_secret']
-        ),
-        trello_organization_id=get_first_value(
-            os.environ.get('TRELLO_ORGANIZATION_ID`'),
-            conf['trello']['organization_id']
-        ),
+        # trello_api_key=get_first_value(
+        #     os.environ.get('TRELLO_API_KEY'),
+        #     conf['trello']['api_key']
+        # ),
+        # trello_api_secret=get_first_value(
+        #     os.environ.get('TRELLO_API_SECRET'),
+        #     conf['trello']['api_secret']
+        # ),
+        # trello_oauth_token=get_first_value(
+        #     os.environ.get('TRELLO_OAUTH_TOKEN'),
+        #     conf['trello']['oauth_token']
+        # ),
+        # trello_oauth_secret=get_first_value(
+        #     os.environ.get('TRELLO_OAUTH_SECRET'),
+        #     conf['trello']['oauth_secret']
+        # ),
+        # trello_organization_id=get_first_value(
+        #     os.environ.get('TRELLO_ORGANIZATION_ID'),
+        #     conf['trello']['organization_id']
+        # ),
         slack_webhook_url=get_first_value(
             os.environ.get('SLACK_WEBHOOK_URL'),
             conf['slack']['webhook_url']
@@ -140,20 +141,20 @@ def main():
     conf['slack']['webhook_url'] = args.slack_webhook_url
 
     # trello
-    conf['trello']['api_key'] = args.trello_api_key
-    conf['trello']['api_secret'] = args.trello_api_secret
-    conf['trello']['oauth_secret'] = args.trello_oauth_secret
-    conf['trello']['oauth_token'] = args.trello_oauth_token
-    conf['trello']['organization_id'] = args.trello_organization_id
+    # conf['trello']['api_key'] = args.trello_api_key
+    # conf['trello']['api_secret'] = args.trello_api_secret
+    # conf['trello']['oauth_secret'] = args.trello_oauth_secret
+    # conf['trello']['oauth_token'] = args.trello_oauth_token
+    # conf['trello']['organization_id'] = args.trello_organization_id
 
     # create the bot
-    try:
-        bot = agilebot.AgileBot(**conf)
-    except Exception as e:
-        logger.error('{}'.format(e))
-        sys.exit(1)
-    else:
-        logger.debug('AgileBot created successfully')
+    # try:
+    #     bot = agilebot.AgileBot(**conf)
+    # except Exception as e:
+    #     logger.error('{}'.format(e))
+    #     sys.exit(1)
+    # else:
+    #     logger.debug('AgileBot created successfully')
 
     if not len(sys.argv) > 1:
         # no arguments given, show help
@@ -179,7 +180,7 @@ def main():
         sc_0 = getattr(args, 'subparser_0', '')
         sc_1 = getattr(args, 'subparser_1', '')
         logger.debug('executing: agilebot {} {}'.format(sc_0, sc_1))
-        args.func(args, bot)
+        args.func(args, conf)
 
 
 if __name__ == '__main__':

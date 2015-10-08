@@ -4,6 +4,8 @@ import os
 import requests
 import calendar
 import time
+import sys
+from agilebot import agilebot
 DUMP_PATH = '/tmp/agilebot_dumps'
 
 
@@ -50,3 +52,27 @@ def left_merge(left, right):
             else:
                 new_left[k] = right.get(k) or left[k]
         return new_left
+
+
+def get_first_value(*args):
+    return next((i for i in args if i is not None), None)
+
+
+def update_config_group(group_name, args, conf):
+    for k, v in conf[group_name].items():
+        val = getattr(args, k, None)
+        if val is not None:
+            conf[group_name][k] = val
+    return conf
+
+
+def create_bot(conf, logger):
+    try:
+        bot = agilebot.AgileBot(**conf)
+    except Exception as e:
+        logger.error('{}'.format(e))
+        sys.exit(1)
+    else:
+        logger.debug('AgileBot created successfully')
+
+    return bot

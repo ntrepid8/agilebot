@@ -4,12 +4,22 @@ from logging import NullHandler
 import sys
 import json
 import argparse
+import os
+from agilebot import util
 logger = logging.getLogger('agilebot.trello')
 logger.addHandler(NullHandler())
 
 
-def cmd_trello_get_board(args, bot):
+def create_bot(args, conf):
+    # update trello arguments
+    conf = util.update_config_group('trello', args, conf)
+    # create the bot
+    return util.create_bot(conf, logger)
+
+
+def cmd_trello_get_board(args, conf):
     logger.debug('CMD trello get-board')
+    bot = create_bot(args, conf)
     try:
         board = bot.trello.get_board(board_id=args.board_id)
     except Exception as e:
@@ -19,8 +29,9 @@ def cmd_trello_get_board(args, bot):
         print(json.dumps(board))
 
 
-def cmd_trello_find_boards(args, bot):
+def cmd_trello_find_boards(args, conf):
     logger.debug('CMD trello find-boards')
+    bot = create_bot(args, conf)
     try:
         boards = bot.trello.find_boards(
             board_name=args.board_name,
@@ -33,8 +44,9 @@ def cmd_trello_find_boards(args, bot):
         print(json.dumps(boards))
 
 
-def cmd_trello_create_board(args, bot):
+def cmd_trello_create_board(args, conf):
     logger.debug('CMD trello create-board')
+    bot = create_bot(args, conf)
     try:
         board = bot.trello.create_board(
             board_name=args.board_name,
@@ -48,7 +60,7 @@ def cmd_trello_create_board(args, bot):
         print(json.dumps(board))
 
 
-def sub_command(main_subparsers):
+def sub_command(main_subparsers, conf):
     # trello sub-command
     trello_parser = main_subparsers.add_parser('trello', help='interact with trello')
     trello_subparsers = trello_parser.add_subparsers(help='sub-commands', dest='subparser_1')
@@ -57,6 +69,9 @@ def sub_command(main_subparsers):
     # common arguments parser
     trello_common_parser = argparse.ArgumentParser(description='trello common arguments', add_help=False)
     trello_common_parser.add_argument('--organization-id', type=str, help='organization ID in Trello')
+    trello_common_parser.set_defaults(
+        organization_id=os.environ.get('TRELLO_ORGANIZATION_ID'),
+    )
 
     # trello auth argument group
     trello_auth_group = trello_common_parser.add_argument_group(
@@ -66,6 +81,12 @@ def sub_command(main_subparsers):
     trello_auth_group.add_argument('--api-secret', type=str, help='Trello API secret')
     trello_auth_group.add_argument('--oauth-token', type=str, help='Trello OAuth access token')
     trello_auth_group.add_argument('--oauth-secret', type=str, help='Trello OAuth access secret')
+    trello_auth_group.set_defaults(
+        api_key=os.environ.get('TRELLO_API_KEY'),
+        api_secret=os.environ.get('TRELLO_API_SECRET'),
+        oauth_token=os.environ.get('TRELLO_OAUTH_TOKEN'),
+        oauth_secret=os.environ.get('TRELLO_OAUTH_SECRET'),
+    )
 
     # SUB-COMMAND: get_board (gb)
     gb_desc = 'get a trello board by id'
