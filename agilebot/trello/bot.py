@@ -182,3 +182,18 @@ class TrelloBot(object):
         # success
         return board
 
+    def close_board(self, board_id):
+        # ensure we have all the configuration required to make a request
+        self.check_required_conf()
+
+        # close the board
+        resp = self.session.put(
+            '{base_url}/boards/{board_id}/closed'.format(base_url=TRELLO_API_BASE_URL, board_id=board_id),
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps({'value': True})
+        )
+        util.log_request_response(resp, logger)
+        if resp.status_code != requests.codes.ok:
+            raise ValueError('http error: {}'.format(resp.status_code))
+        return resp.json()
+

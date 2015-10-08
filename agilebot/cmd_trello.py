@@ -60,6 +60,18 @@ def cmd_trello_create_board(args, conf):
         print(json.dumps(board))
 
 
+def cmd_trello_close_board(args, conf):
+    logger.debug('CMD trello close-board')
+    bot = create_bot(args, conf)
+    try:
+        board = bot.trello.close_board(board_id=args.board_id)
+    except Exception as e:
+        logger.error('{}'.format(e))
+        sys.exit(1)
+    else:
+        print(json.dumps(board))
+
+
 def sub_command(main_subparsers):
     # trello sub-command
     trello_parser = main_subparsers.add_parser('trello', help='interact with trello')
@@ -139,5 +151,20 @@ def sub_command(main_subparsers):
         help='name of list to add to the board (multiple allowed)')
     # cb set defaults
     cb_parser.set_defaults(func=cmd_trello_create_board, func_help=cb_parser.print_help)
+
+    #
+    # SUB-COMMAND: close_board
+    close_board_desc = 'find trello boards by name or pattern, if not pattern is give all boards are returned'
+    close_board_parser = trello_subparsers.add_parser(
+        'close-board',
+        description=close_board_desc,
+        parents=[trello_common_parser],
+        formatter_class=argparse.MetavarTypeHelpFormatter,
+        help=close_board_desc)
+    # close-board required arguments
+    close_board_req_group = close_board_parser.add_argument_group('required arguments')
+    close_board_req_group.add_argument('--board-id', required=True, type=str, help='board Id')
+    # close-board set defaults
+    close_board_parser.set_defaults(func=cmd_trello_close_board, func_help=close_board_parser.print_help)
 
     return trello_parser
