@@ -20,7 +20,7 @@ def find_boards(args, bot):
         search_args.append('open')
 
     try:
-        resp = bot.find_boards(search_args, organization_id=args.organization_id, name=args.name)
+        resp = bot.find_boards(search_args, organization_id=args.organization_id, board_name=args.name)
     except Exception as e:
         logger.error('{}'.format(e))
         sys.exit(1)

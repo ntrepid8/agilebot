@@ -5,6 +5,7 @@ from agilebot import util
 import logging
 from logging import NullHandler
 from fnmatch import fnmatch
+import json
 logger = logging.getLogger('agilebot.lib.trello')
 logger.addHandler(NullHandler())
 TRELLO_API_BASE_URL = 'https://api.trello.com/1'
@@ -73,13 +74,13 @@ class TrelloBot(object):
         board = resp.json()
         return board
 
-    def find_boards(self, name=None, lists=None, cards=None, organization_id=None):
+    def find_boards(self, board_name=None, lists=None, cards=None, organization_id=None):
 
         # ensure we have all the configuration required to make a request
         self.check_required_conf()
 
         # param setup
-        p_name = name or '*'
+        p_name = board_name or '*'
         p_filters = ['open']
         p_lists = lists or 'open'
         p_cards = cards or 'open'
@@ -109,5 +110,75 @@ class TrelloBot(object):
         # return the list of boards
         return boards
 
-    def create_board(self, board_name):
-        pass  # TODO - finish this method
+    def create_board(self, board_name, list_names=None, organization_id=None):
+
+        # validate board name
+        if board_name is None:
+            raise ValueError('board_name is required')
+
+        # ensure we have all the configuration required to make a request
+        self.check_required_conf()
+
+        # param setup
+        p_board_name = board_name
+        p_organization_id = organization_id or self.conf.organization_id
+        p_list_names = list_names or []
+
+        # check for duplicate names among open boards
+        dups = self.find_boards(board_name=p_board_name, organization_id=p_organization_id)
+        if dups:
+            raise ValueError('duplicate board_name: {}'.format(p_board_name))
+
+        # create the board
+        req_body = {
+            'name': p_board_name
+        }
+        if p_organization_id:
+            req_body['idOrganization'] = p_organization_id
+            req_body['prefs_permissionLevel'] = 'org'
+        resp = self.session.post(
+            '{base_url}/boards'.format(TRELLO_API_BASE_URL),
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps(req_body)
+        )
+        util.log_request_response(resp, logger)
+        if resp.status_code != requests.codes.ok:
+            raise ValueError('http error: {}'.format(resp.status_code))
+        board = resp.json()
+
+        # if lists are specified, purge the default lists
+        if list_names is not None:
+            resp = self.session.get(
+                '{base_url}/boards/{board_id}/lists'.format(base_url=TRELLO_API_BASE_URL, board_id=board['id'])
+            )
+            util.log_request_response(resp, logger)
+            if resp.status_code != requests.codes.ok:
+                raise ValueError('http error: {}'.format(resp.status_code))
+            default_lists = resp.json()
+            for l in default_lists:
+                resp = self.session.put(
+                    '{base_url}/lists/{list_id}/closed'.format(base_url=TRELLO_API_BASE_URL, list_id=l['id']),
+                    headers={'Content-Type': 'application/json'},
+                    data=json.dumps({'value': True})
+                )
+                util.log_request_response(resp, logger)
+                if resp.status_code != requests.codes.ok:
+                    raise ValueError('http error: {}'.format(resp.status_code))
+
+        # add any lists specified
+        for i, l in enumerate(p_list_names):
+            resp = self.session.post(
+                '{base_url}/boards/{board_id}/lists'.format(base_url=TRELLO_API_BASE_URL, board_id=board['id']),
+                headers={'Content-Type': 'application/json'},
+                data=json.dumps({'name': l, 'pos': i + 1})
+            )
+            util.log_request_response(resp, logger)
+            if resp.status_code != requests.codes.ok:
+                raise ValueError('http error: {}'.format(resp.status_code))
+
+        # get the full board
+        board = self.get_board(board_id=board['id'])
+
+        # success
+        return board
+

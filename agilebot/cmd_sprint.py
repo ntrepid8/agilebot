@@ -24,7 +24,7 @@ def find_sprints(args, bot):
         resp = bot.find_boards(
             filter_params=search_args,
             organization_id=args.organization_id,
-            name=board_name,
+            board_name=board_name,
             include_cards=True,
             include_lists=True,
             query_params={

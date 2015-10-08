@@ -21,7 +21,7 @@ def cmd_trello_get_board(args, bot):
 def cmd_trello_find_boards(args, bot):
     logger.debug('CMD trello find')
     try:
-        boards = bot.trello.find_boards(name=args.board_name)
+        boards = bot.trello.find_boards(board_name=args.board_name)
     except Exception as e:
         logger.error('{}'.format(e))
         sys.exit(1)
