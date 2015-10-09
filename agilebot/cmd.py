@@ -114,7 +114,8 @@ def main():
             logger.debug('show general help')
             func_help = parser.print_help
         func_help()
-        logger.debug('parser namespace: {}'.format(pformat(args)))
+        logger.debug('args namespace: {}'.format(pformat(args)))
+        logger.debug('main parser: {}'.format(pformat(parser)))
         sys.exit(1)
     else:
         # run the sub-command
