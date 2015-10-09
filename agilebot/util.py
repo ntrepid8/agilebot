@@ -16,6 +16,7 @@ def log_request_response(resp, logger):
         dp_kwargs = dict(dump_path=DUMP_PATH, code=resp.status_code, time_stamp=calendar.timegm(time.gmtime()))
         with open('{dump_path}/{method}_{code}_{time_stamp}.log'.format(**dp_kwargs), 'w') as f:
             f.write(vars(resp))
+    # TODO - sometimes 'method' is not available, handle this condition
     logger.debug('{method} {code} {url}'.format(
         method=resp.request.method,
         code=resp.status_code,

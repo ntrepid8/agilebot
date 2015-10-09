@@ -137,7 +137,7 @@ class TrelloBot(object):
             req_body['idOrganization'] = p_organization_id
             req_body['prefs_permissionLevel'] = 'org'
         resp = self.session.post(
-            '{base_url}/boards'.format(TRELLO_API_BASE_URL),
+            '{base_url}/boards'.format(base_url=TRELLO_API_BASE_URL),
             headers={'Content-Type': 'application/json'},
             data=json.dumps(req_body)
         )
@@ -197,3 +197,32 @@ class TrelloBot(object):
             raise ValueError('http error: {}'.format(resp.status_code))
         return resp.json()
 
+    def update_board(self, board_id, data):
+        # ensure we have all the configuration required to make a request
+        self.check_required_conf()
+
+        # update the board
+        resp = self.session.put(
+            '{base_url}/boards/{board_id}'.format(base_url=TRELLO_API_BASE_URL, board_id=board_id),
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps(data)
+        )
+        util.log_request_response(resp, logger)
+        if resp.status_code != requests.codes.ok:
+            raise ValueError('http error: {}'.format(resp.status_code))
+        return self.get_board(board_id=board_id)
+
+    def update_card(self, card_id, data):
+        # ensure we have all the configuration required to make a request
+        self.check_required_conf()
+
+        # update the card
+        resp = self.session.put(
+            '{base_url}/cards/{card_id}'.format(base_url=TRELLO_API_BASE_URL, card_id=card_id),
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps(data)
+        )
+        util.log_request_response(resp, logger)
+        if resp.status_code != requests.codes.ok:
+            raise ValueError('http error: {}'.format(resp.status_code))
+        return resp.json()

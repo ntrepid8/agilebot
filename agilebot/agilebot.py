@@ -38,7 +38,8 @@ class AgileBot(object):
         return {
             'agile': {
                 'backlogs': [],
-                'sprint_lists': ['To Do', 'In Progress', 'Completed', 'Deployed']
+                'sprint_lists': ['To Do', 'In Progress', 'Completed', 'Deployed'],
+                'sprint_lists_forward': ['To Do', 'In Progress']
             },
             'logging': {
                 'level': 'INFO'
@@ -152,67 +153,96 @@ class AgileBot(object):
         )
         return sprint_name.format(**sn_kwargs)
 
-    def create_sprint(self, name=None, sprint_list_names=None, organization_id=None):
-        # TODO - move this to trello.bot
-
-        # render the name
-        sprint_name = self.format_sprint_name(name or DEFAULT_SPRINT_NAME_TPL)
-
-        # check for duplicate names
-        duplicates = self.find_boards(name=sprint_name, organization_id=organization_id)
-        if duplicates:
-            raise ValueError('duplicate board name: "{}"'.format(sprint_name))
-
-        # create the sprint board
-        board_url = [TRELLO_API_BASE_URL, '/boards']
-        board_data = {
-            'name': sprint_name
+    def start_new_sprint(self,
+                         sprint_name=None,
+                         sprint_list_names=None,
+                         organization_id=None,
+                         closing_sprint_name=None):
+        #
+        # create a new sprint
+        new_sprint = {
+            'name': self.format_sprint_name(sprint_name or DEFAULT_SPRINT_NAME_TPL),
+            'lists': sprint_list_names or self.agile.sprint_lists
         }
-        org_id = organization_id or self.trello.conf.organization_id
-        if org_id:
-            board_data['idOrganization'] = org_id
-            board_data['prefs_permissionLevel'] = 'org'
-        board_resp = self.trello.session.post(
-            ''.join(board_url),
-            headers={'Content-Type': 'application/json'},
-            data=json.dumps(board_data)
-        )
-        self.log_http(board_resp)
 
-        if board_resp.status_code != requests.codes.ok:
-            raise ValueError('http error: {}'.format(board_resp.status_code))
-        board_json = board_resp.json()
+        # mark the new sprint as the active sprint
+        if 'active' not in new_sprint['name']:
+            new_sprint['name'] += ' (active)'
 
-        # close the default lists
-        default_lists_resp = self.trello.session.get(
-            ''.join([TRELLO_API_BASE_URL, '/boards/{board_id}/lists'.format(board_id=board_json['id'])])
-        )
+        # find the closing board if applicable
+        closing_sprint_board = None
+        if closing_sprint_name:
+            resp = self.trello.find_boards(board_name=closing_sprint_name, organization_id=organization_id)
+            if len(resp) == 0:
+                raise ValueError('nothing migrated: closing_sprint_name not found: {}'.format(closing_sprint_name))
+            elif len(resp) > 1:
+                raise ValueError('nothing migrated: ambiguous closing_sprint_name: {}, found {} boards matching'.format(
+                    closing_sprint_name, len(resp)
+                ))
+            else:
+                closing_sprint_board = resp[0]
 
-        self.log_http(default_lists_resp)
-        if default_lists_resp.status_code != requests.codes.ok:
-            raise ValueError('http error: {}'.format(default_lists_resp.status_code))
-        for l in default_lists_resp.json():
-            l_resp = self.trello.session.put(
-                ''.join([TRELLO_API_BASE_URL, '/lists/{list_id}/closed'.format(list_id=l['id'])]),
-                headers={'Content-Type': 'application/json'},
-                data=json.dumps({'value': True})
+        # create a trello board for the sprint
+        try:
+            trello_board = self.trello.create_board(
+                board_name=new_sprint['name'],
+                list_names=new_sprint['lists'],
+                organization_id=organization_id
             )
-            self.log_http(l_resp)
-
-        # add the lists
-        lists_url = [TRELLO_API_BASE_URL, '/boards/{board_id}/lists'.format(board_id=board_json['id'])]
-        sprint_list_names = sprint_list_names or self.agile.sprint_lists
-        sprint_list_resps = []
-        for index, sln in enumerate(sprint_list_names):
-            sprint_list_resps.append(self.trello.session.post(
-                ''.join(lists_url),
-                headers={'Content-Type': 'application/json'},
-                data=json.dumps({
-                    'name': sln,
-                    'pos': index + 1
-                })
+        except Exception as e:
+            logger.debug('while running trello.create_board agilebot.create_sprint caught: {}({})'.format(
+                type(e).__name__, e
             ))
-            self.log_http(sprint_list_resps[-1])
+            raise e
+        else:
+            new_sprint['trello_board'] = trello_board
+        logger.debug('created new sprint board: {}'.format(trello_board['name']))
 
-        return {'success': True, 'id': board_json['id'], 'name': board_json['name']}
+        # update the name of the closing sprint
+        csn = closing_sprint_board['name']
+        if 'active' in csn:
+            csn = csn.replace('active', 'closing')
+        if 'closing' not in csn:
+            csn += ' (closing)'
+        closing_sprint_board = self.trello.update_board(
+            board_id=closing_sprint_board['id'],
+            data={'name': csn}
+        )
+        logger.debug('updated closing sprint name to: {}'.format(closing_sprint_board['name']))
+
+        # if not migrating from a sprint that is closing, we are all done
+        if not closing_sprint_name:
+            return new_sprint
+
+        #
+        # migrate from the closing sprint
+
+        # lists to forward
+        lists_forward = [l for l in closing_sprint_board['lists'] if l['name'] in self.agile.sprint_lists_forward]
+        lists_forward = {l['id']: l for l in lists_forward}
+        lists_forward_targets = {l['name']: l for l in new_sprint['trello_board']['lists']}
+
+        # migrate cards
+        migrated_cards = []
+        for c in closing_sprint_board['cards']:
+            if c['idList'] in lists_forward:
+                old_list_id = c['idList']
+                list_name = lists_forward[old_list_id]['name']
+                new_list_id = lists_forward_targets[list_name]['id']
+                update_c = {
+                    'idList': new_list_id,
+                    'idBoard': new_sprint['trello_board']['id']
+                }
+                updated_c = self.trello.update_card(c['id'], update_c)
+                migrated_cards.append(updated_c)
+        logger.debug('migrated cards: {}'.format(len(migrated_cards)))
+
+        # get the updated trello board
+        new_sprint['trello_board'] = self.trello.get_board(new_sprint['trello_board']['id'])
+
+        # log it
+        logger.info('successfully started new sprint: {}'.format(new_sprint['trello_board']['name']))
+
+        # all done!
+        return new_sprint
 

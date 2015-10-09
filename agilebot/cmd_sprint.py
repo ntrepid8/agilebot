@@ -46,9 +46,15 @@ def cmd_sprint_info(args, bot):
     print(json.dumps(resp))
 
 
-def cmd_sprint_create(args, bot):
+def cmd_sprint_start_new(args, conf):
+    logger.debug('CMD sprint render-name')
     try:
-        resp = bot.create_sprint(name=args.name, organization_id=args.organization_id)
+        conf = util.update_config_group('sprint', args, conf)
+        bot = util.create_bot(conf, logger)
+        resp = bot.start_new_sprint(
+            sprint_name=args.new_sprint_name,
+            closing_sprint_name=args.closing_sprint_name,
+            organization_id=args.organization_id)
     except Exception as e:
         logger.error('{}'.format(e))
         sys.exit(1)
@@ -82,15 +88,28 @@ def sub_command(main_subparsers):
     parser_info.add_argument('--organization-id', default=None, help='organization id')
     parser_info.add_argument('--name', default='Sprint*', help='sprint board name (supports *patterns*)')
     parser_info.set_defaults(func=cmd_sprint_info, func_help=parser_info.print_help)
-    
-    # create command
-    parser_create = sprint_subparsers.add_parser('create', help='show create about sprints')
-    parser_create.add_argument('--organization-id', default=None, help='organization id')
+
+    #
+    # SUB-COMMAND: start-new (sn)
+    sn_desc = 'start a new sprint and optionally migrate cards from the prior sprint'
+    parser_create = sprint_subparsers.add_parser(
+        'start-new',
+        aliases=['sn'],
+        description=sn_desc,
+        formatter_class=argparse.MetavarTypeHelpFormatter,
+        help=sn_desc
+    )
+    parser_create.add_argument('--organization-id', type=str, help='organization id')
     parser_create.add_argument(
-        '--name',
+        '--new-sprint-name',
+        type=str,
         default='Sprint {iso_year}.{iso_week}',
-        help='sprint board name (supports *patterns* and templates: {iso_year}, {iso_week})')
-    parser_create.set_defaults(func=cmd_sprint_create, func_help=parser_create.print_help)
+        help='new sprint name (supports templates: {iso_year}, {iso_week})')
+    parser_create.add_argument(
+        '--closing-sprint-name',
+        type=str,
+        help='closing sprint name (supports * patterns)')
+    parser_create.set_defaults(func=cmd_sprint_start_new, func_help=parser_create.print_help)
 
     #
     # SUB-COMMAND: render-name (rn)
