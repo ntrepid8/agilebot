@@ -5,6 +5,7 @@ import sys
 import pytoml as toml
 import logging
 from copy import copy
+from pprint import pformat
 from colorlog import ColoredFormatter
 from agilebot import (
     agilebot,
@@ -68,13 +69,6 @@ def main():
     subparsers = parser.add_subparsers(help='sub-command help', dest='subparser_0')
     parser.add_argument('--conf', action='store_true', default=False, help='print current configuration')
 
-    # boards sub-command
-    sub_commands = {
-        'slack': cmd_slack.sub_command(subparsers),
-        'sprint': cmd_sprint.sub_command(subparsers),
-        'trello': cmd_trello.sub_command(subparsers)
-    }
-
     # set defaults, ENV var first, then config file, then command line args
     parser.set_defaults(
         func=None,
@@ -84,6 +78,13 @@ def main():
             conf['agile']['sprint_lists']
         ),
     )
+
+    # boards sub-command
+    sub_commands = {
+        'slack': cmd_slack.sub_command(subparsers),
+        'sprint': cmd_sprint.sub_command(subparsers),
+        'trello': cmd_trello.sub_command(subparsers)
+    }
 
     # parse the arguments
     args = parser.parse_args()
@@ -105,7 +106,7 @@ def main():
         print(toml.dumps(conf, sort_keys=True))
     elif not getattr(args, 'func', None):
         # if the sub-command function is not set, show help
-        logger.debug('sub-command function not found')
+        logger.debug('sub-command function not found for: {}'.format(str(sys.argv)))
         if hasattr(args, 'func_help'):
             logger.debug('show sub-command specific help')
             func_help = args.func_help
@@ -113,6 +114,7 @@ def main():
             logger.debug('show general help')
             func_help = parser.print_help
         func_help()
+        logger.debug('parser namespace: {}'.format(pformat(args)))
         sys.exit(1)
     else:
         # run the sub-command
