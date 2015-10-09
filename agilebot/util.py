@@ -1,13 +1,12 @@
 __author__ = 'ntrepid8'
 from collections import namedtuple, Mapping
 import os
-import requests
 import calendar
 import time
-import sys
 import traceback
 import json
-from agilebot import agilebot
+import requests
+
 DUMP_PATH = '/tmp/agilebot_dumps'
 
 
@@ -92,18 +91,6 @@ def update_config_group(group_name, args, conf):
         if val is not None:
             conf[group_name][k] = val
     return conf
-
-
-def create_bot(conf, logger):
-    try:
-        bot = agilebot.AgileBot(**conf)
-    except Exception as e:
-        logger.error('{}'.format(e))
-        sys.exit(1)
-    else:
-        logger.debug('AgileBot created successfully')
-
-    return bot
 
 
 def dump_trace(error_class, error_str, exc_info):

@@ -1,4 +1,5 @@
 __author__ = 'ntrepid8'
+import agilebot.cmd_util
 import logging
 from logging import NullHandler
 import sys
@@ -14,7 +15,7 @@ def create_bot(args, conf):
     # update trello arguments
     conf = util.update_config_group('trello', args, conf)
     # create the bot
-    return util.create_bot(conf, logger)
+    return agilebot.cmd_util.create_bot(conf, logger)
 
 
 def cmd_trello_get_board(args, conf):

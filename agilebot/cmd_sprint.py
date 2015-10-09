@@ -1,4 +1,5 @@
 __author__ = 'ntrepid8'
+import agilebot.cmd_util
 import logging
 from logging import NullHandler
 import sys
@@ -24,7 +25,7 @@ def find_sprints(args, conf):
             board_name += '*(active)'
     try:
         conf = util.update_config_group('sprint', args, conf)
-        bot = util.create_bot(conf, logger)
+        bot = agilebot.cmd_util.create_bot(conf, logger)
         resp = bot.trello.find_boards(
             board_name=board_name,
             organization_id=args.organization_id
@@ -47,7 +48,7 @@ def cmd_sprint_start_new(args, conf):
     logger.debug('CMD sprint render-name')
     try:
         conf = util.update_config_group('sprint', args, conf)
-        bot = util.create_bot(conf, logger)
+        bot = agilebot.cmd_util.create_bot(conf, logger)
         resp = bot.start_new_sprint(
             sprint_name=args.new_sprint_name,
             closing_sprint_name=args.closing_sprint_name,
@@ -63,7 +64,7 @@ def cmd_render_name(args, conf):
     logger.debug('CMD sprint render-name')
     try:
         conf = util.update_config_group('sprint', args, conf)
-        bot = util.create_bot(conf, logger)
+        bot = agilebot.cmd_util.create_bot(conf, logger)
         rendered_name = bot.format_sprint_name(args.sprint_name)
     except Exception as e:
         util.log_generic_error(e, sys.exc_info(), logger)
@@ -76,7 +77,7 @@ def cmd_sprint_get_active(args, conf):
     logger.debug('CMD sprint get-active')
     try:
         conf = util.update_config_group('sprint', args, conf)
-        bot = util.create_bot(conf, logger)
+        bot = agilebot.cmd_util.create_bot(conf, logger)
         resp = bot.get_active_sprint()
     except Exception as e:
         util.log_generic_error(e, sys.exc_info(), logger)
@@ -89,7 +90,7 @@ def cmd_sprint_get_closing(args, conf):
     logger.debug('CMD sprint get-closing')
     try:
         conf = util.update_config_group('sprint', args, conf)
-        bot = util.create_bot(conf, logger)
+        bot = agilebot.cmd_util.create_bot(conf, logger)
         resp = bot.get_closing_sprint()
     except Exception as e:
         util.log_generic_error(e, sys.exc_info(), logger)

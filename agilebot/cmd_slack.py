@@ -1,4 +1,5 @@
 __author__ = 'ntrepid8'
+import agilebot.cmd_util
 import logging
 from logging import NullHandler
 import json
@@ -15,7 +16,7 @@ def create_bot(args, conf):
     # update trello arguments
     conf = util.update_config_group('slack', args, conf)
     # create the bot
-    return util.create_bot(conf, logger)
+    return agilebot.cmd_util.create_bot(conf, logger)
 
 
 def cmd_slack_post(args, conf):
