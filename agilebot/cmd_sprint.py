@@ -10,7 +10,7 @@ logger.addHandler(NullHandler())
 ACTIVE_PATTERN = '*(active)'
 
 
-def find_sprints(args, bot):
+def find_sprints(args, conf):
     search_args = ['open']
     board_name = None
     if args.name and args.active and ACTIVE_PATTERN in args.name:
@@ -23,18 +23,15 @@ def find_sprints(args, bot):
         else:
             board_name += '*(active)'
     try:
-        resp = bot.find_boards(
-            filter_params=search_args,
-            organization_id=args.organization_id,
+        conf = util.update_config_group('sprint', args, conf)
+        bot = util.create_bot(conf, logger)
+        resp = bot.trello.find_boards(
             board_name=board_name,
-            include_cards=True,
-            include_lists=True,
-            query_params={
-                'lists': 'open'
-            }
+            organization_id=args.organization_id
         )
+
     except Exception as e:
-        logger.error('{}'.format(e))
+        util.log_generic_error(e, sys.exc_info(), logger)
         sys.exit(1)
     else:
         return resp
@@ -69,7 +66,7 @@ def cmd_render_name(args, conf):
         bot = util.create_bot(conf, logger)
         rendered_name = bot.format_sprint_name(args.sprint_name)
     except Exception as e:
-        logger.error('{}'.format(e))
+        util.log_generic_error(e, sys.exc_info(), logger)
         sys.exit(1)
     else:
         print(rendered_name)
