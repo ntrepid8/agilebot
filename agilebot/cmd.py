@@ -66,11 +66,6 @@ def main():
     parser = argparse.ArgumentParser(
         description='Automate functions for Agile development sprints.')
     subparsers = parser.add_subparsers(help='sub-command help', dest='subparser_0')
-    # parser.add_argument('--trello-organization-id', help='organization ID in Trello')
-    # parser.add_argument('--trello-api-key', help='your Trello API key')
-    # parser.add_argument('--trello-api-secret', help='your Trello API secret')
-    # parser.add_argument('--trello-oauth-token', help='your Trello OAuth access token')
-    # parser.add_argument('--trello-oauth-secret', help='your Trello OAuth access secret')
     parser.add_argument('--conf', action='store_true', default=False, help='print current configuration')
 
     # boards sub-command
@@ -84,42 +79,6 @@ def main():
     parser.set_defaults(
         func=None,
         func_help=parser.print_help,
-        # trello_api_key=get_first_value(
-        #     os.environ.get('TRELLO_API_KEY'),
-        #     conf['trello']['api_key']
-        # ),
-        # trello_api_secret=get_first_value(
-        #     os.environ.get('TRELLO_API_SECRET'),
-        #     conf['trello']['api_secret']
-        # ),
-        # trello_oauth_token=get_first_value(
-        #     os.environ.get('TRELLO_OAUTH_TOKEN'),
-        #     conf['trello']['oauth_token']
-        # ),
-        # trello_oauth_secret=get_first_value(
-        #     os.environ.get('TRELLO_OAUTH_SECRET'),
-        #     conf['trello']['oauth_secret']
-        # ),
-        # trello_organization_id=get_first_value(
-        #     os.environ.get('TRELLO_ORGANIZATION_ID'),
-        #     conf['trello']['organization_id']
-        # ),
-        # slack_webhook_url=get_first_value(
-        #     os.environ.get('SLACK_WEBHOOK_URL'),
-        #     conf['slack']['webhook_url']
-        # ),
-        # slack_channel=get_first_value(
-        #     os.environ.get('SLACK_CHANNEL'),
-        #     conf['slack']['channel']
-        # ),
-        # slack_icon_emoji=get_first_value(
-        #     os.environ.get('SLACK_ICON_EMOJI'),
-        #     conf['slack']['icon_emoji']
-        # ),
-        # slack_username=get_first_value(
-        #     os.environ.get('SLACK_USERNAME'),
-        #     conf['slack']['username']
-        # ),
         agile_sprint_lists=get_first_value(
             os.environ.get('AGILE_SPRINT_LISTS'),
             conf['agile']['sprint_lists']
@@ -135,28 +94,6 @@ def main():
 
     # agile
     conf['agile']['sprint_lists'] = args.agile_sprint_lists
-
-    # # slack
-    # conf['slack']['channel'] = args.slack_channel
-    # conf['slack']['icon_emoji'] = args.slack_icon_emoji
-    # conf['slack']['username'] = args.slack_username
-    # conf['slack']['webhook_url'] = args.slack_webhook_url
-
-    # # trello
-    # conf['trello']['api_key'] = args.trello_api_key
-    # conf['trello']['api_secret'] = args.trello_api_secret
-    # conf['trello']['oauth_secret'] = args.trello_oauth_secret
-    # conf['trello']['oauth_token'] = args.trello_oauth_token
-    # conf['trello']['organization_id'] = args.trello_organization_id
-
-    # # create the bot
-    # try:
-    #     bot = agilebot.AgileBot(**conf)
-    # except Exception as e:
-    #     logger.error('{}'.format(e))
-    #     sys.exit(1)
-    # else:
-    #     logger.debug('AgileBot created successfully')
 
     if not len(sys.argv) > 1:
         # no arguments given, show help
