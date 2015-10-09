@@ -8,7 +8,6 @@ from copy import copy
 from colorlog import ColoredFormatter
 from agilebot import (
     agilebot,
-    cmd_boards,
     cmd_slack,
     cmd_sprint,
     cmd_trello,
@@ -76,7 +75,6 @@ def main():
 
     # boards sub-command
     sub_commands = {
-        'boards': cmd_boards.sub_command(subparsers),
         'slack': cmd_slack.sub_command(subparsers),
         'sprint': cmd_sprint.sub_command(subparsers),
         'trello': cmd_trello.sub_command(subparsers)
