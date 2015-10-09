@@ -85,6 +85,19 @@ def cmd_sprint_get_active(args, conf):
         print(json.dumps(resp))
 
 
+def cmd_sprint_get_closing(args, conf):
+    logger.debug('CMD sprint get-closing')
+    try:
+        conf = util.update_config_group('sprint', args, conf)
+        bot = util.create_bot(conf, logger)
+        resp = bot.get_closing_sprint()
+    except Exception as e:
+        util.log_generic_error(e, sys.exc_info(), logger)
+        sys.exit(1)
+    else:
+        print(json.dumps(resp))
+
+
 def sub_command(main_subparsers):
 
     # sprint command
@@ -146,3 +159,15 @@ def sub_command(main_subparsers):
         help=ga_desc)
     # ga defaults
     ga_parser.set_defaults(func=cmd_sprint_get_active, func_help=ga_parser.print_help)
+    
+    #
+    # SUB-COMMAND: get-closing (gc)
+    gc_desc = 'get the closing sprint'
+    gc_parser = sprint_subparsers.add_parser(
+        'get-closing',
+        aliases=['gc'],
+        description=gc_desc,
+        formatter_class=argparse.MetavarTypeHelpFormatter,
+        help=gc_desc)
+    # gc defaults
+    gc_parser.set_defaults(func=cmd_sprint_get_closing, func_help=gc_parser.print_help)

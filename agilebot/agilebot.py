@@ -93,6 +93,16 @@ class AgileBot(object):
         active_sprint['trello_board'] = self.trello.get_board(active_sprint['trello_board']['id'])
         return active_sprint
 
+    def get_closing_sprint(self):
+        if not os.path.exists(self.conf['sprint']['closing_sprint_path']):
+            raise ValueError('closing sprint not found at: {}'.format(self.conf['sprint']['closing_sprint_path']))
+        with open(self.conf['sprint']['closing_sprint_path']) as f:
+            closing_sprint = json.load(f)
+
+        # update the trello board
+        closing_sprint['trello_board'] = self.trello.get_board(closing_sprint['trello_board']['id'])
+        return closing_sprint
+
     def start_new_sprint(self,
                          sprint_name=None,
                          sprint_list_names=None,
