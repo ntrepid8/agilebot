@@ -83,6 +83,16 @@ class AgileBot(object):
         )
         return sprint_name.format(**sn_kwargs)
 
+    def get_active_sprint(self):
+        if not os.path.exists(self.conf['sprint']['active_sprint_path']):
+            raise ValueError('active sprint not found at: {}'.format(self.conf['sprint']['active_sprint_path']))
+        with open(self.conf['sprint']['active_sprint_path']) as f:
+            active_sprint = json.load(f)
+
+        # update the trello board
+        active_sprint['trello_board'] = self.trello.get_board(active_sprint['trello_board']['id'])
+        return active_sprint
+
     def start_new_sprint(self,
                          sprint_name=None,
                          sprint_list_names=None,

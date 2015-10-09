@@ -72,6 +72,19 @@ def cmd_render_name(args, conf):
         print(rendered_name)
 
 
+def cmd_sprint_get_active(args, conf):
+    logger.debug('CMD sprint get-active')
+    try:
+        conf = util.update_config_group('sprint', args, conf)
+        bot = util.create_bot(conf, logger)
+        resp = bot.get_active_sprint()
+    except Exception as e:
+        util.log_generic_error(e, sys.exc_info(), logger)
+        sys.exit(1)
+    else:
+        print(json.dumps(resp))
+
+
 def sub_command(main_subparsers):
 
     # sprint command
@@ -117,9 +130,19 @@ def sub_command(main_subparsers):
         description=rn_desc,
         formatter_class=argparse.MetavarTypeHelpFormatter,
         help=rn_desc)
-
     # rn optional arguments
     rn_parser.add_argument('--sprint-name', type=str, help='sprint name')
-
     # rn defaults
     rn_parser.set_defaults(func=cmd_render_name, func_help=rn_parser.print_help)
+    
+    #
+    # SUB-COMMAND: get-active (ga)
+    ga_desc = 'get the active sprint'
+    ga_parser = sprint_subparsers.add_parser(
+        'get-active',
+        aliases=['ga'],
+        description=ga_desc,
+        formatter_class=argparse.MetavarTypeHelpFormatter,
+        help=ga_desc)
+    # ga defaults
+    ga_parser.set_defaults(func=cmd_sprint_get_active, func_help=ga_parser.print_help)
