@@ -56,7 +56,7 @@ def cmd_sprint_start_new(args, conf):
             closing_sprint_name=args.closing_sprint_name,
             organization_id=args.organization_id)
     except Exception as e:
-        logger.error('{}'.format(e))
+        util.log_generic_error(e, sys.exc_info(), logger)
         sys.exit(1)
     else:
         print(json.dumps(resp))

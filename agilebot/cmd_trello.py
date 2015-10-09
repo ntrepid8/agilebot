@@ -38,7 +38,7 @@ def cmd_trello_find_boards(args, conf):
             organization_id=args.organization_id
         )
     except Exception as e:
-        logger.error('{}'.format(e))
+        util.log_generic_error(e, sys.exc_info(), logger)
         sys.exit(1)
     else:
         print(json.dumps(boards))

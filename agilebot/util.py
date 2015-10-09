@@ -5,6 +5,8 @@ import requests
 import calendar
 import time
 import sys
+import traceback
+import json
 from agilebot import agilebot
 DUMP_PATH = '/tmp/agilebot_dumps'
 
@@ -12,9 +14,13 @@ DUMP_PATH = '/tmp/agilebot_dumps'
 def dump_resp(resp):
     if not os.path.exists(DUMP_PATH):
         os.makedirs(DUMP_PATH)
-    dp_kwargs = dict(dump_path=DUMP_PATH, code=resp.status_code, time_stamp=calendar.timegm(time.gmtime()))
+    dp_kwargs = dict(
+        dump_path=DUMP_PATH,
+        method=resp.request.method,
+        code=resp.status_code,
+        time_stamp=calendar.timegm(time.gmtime()))
     with open('{dump_path}/{method}_{code}_{time_stamp}.log'.format(**dp_kwargs), 'w') as f:
-        f.write(vars(resp))
+        json.dump(vars(resp), f, sort_keys=True, indent=4)
 
 
 def log_request_response(resp, logger):
@@ -98,3 +104,24 @@ def create_bot(conf, logger):
         logger.debug('AgileBot created successfully')
 
     return bot
+
+
+def dump_trace(error_class, error_str, exc_info):
+    if not os.path.exists(DUMP_PATH):
+        os.makedirs(DUMP_PATH)
+    dp_kwargs = dict(dump_path=DUMP_PATH, error_class=error_class, time_stamp=calendar.timegm(time.gmtime()))
+    with open('{dump_path}/{time_stamp}_{error_class}.log'.format(**dp_kwargs), 'w') as f:
+        f.write('{error_class}: {error_str}\n'.format(
+            error_class=error_class,
+            error_str=error_str))
+        f.write(''.join(traceback.format_exception(exc_info[0], exc_info[1], exc_info[2])))
+
+
+def log_generic_error(err, exc_info, logger):
+    ec = type(err).__name__
+    es = str(err)
+    dump_trace(ec, es, exc_info)
+    logger.error('{error_class}: {error_str}'.format(
+        error_class=ec,
+        error_str=es
+    ))
