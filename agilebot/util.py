@@ -9,18 +9,39 @@ from agilebot import agilebot
 DUMP_PATH = '/tmp/agilebot_dumps'
 
 
+def dump_resp(resp):
+    if not os.path.exists(DUMP_PATH):
+        os.makedirs(DUMP_PATH)
+    dp_kwargs = dict(dump_path=DUMP_PATH, code=resp.status_code, time_stamp=calendar.timegm(time.gmtime()))
+    with open('{dump_path}/{method}_{code}_{time_stamp}.log'.format(**dp_kwargs), 'w') as f:
+        f.write(vars(resp))
+
+
 def log_request_response(resp, logger):
+    trigger_dump = False
     if resp.status_code != requests.codes.ok:
-        if not os.path.exists(DUMP_PATH):
-            os.makedirs(DUMP_PATH)
-        dp_kwargs = dict(dump_path=DUMP_PATH, code=resp.status_code, time_stamp=calendar.timegm(time.gmtime()))
-        with open('{dump_path}/{method}_{code}_{time_stamp}.log'.format(**dp_kwargs), 'w') as f:
-            f.write(vars(resp))
+        trigger_dump = True
     # TODO - sometimes 'method' is not available, handle this condition
+    orig_request = getattr(resp, 'request', None)
+    orig_method = 'method_not_available'
+    orig_url = 'url_not_available'
+    if orig_request is not None:
+        if hasattr(orig_request, 'method'):
+            orig_method = orig_request.method
+        else:
+            trigger_dump = True
+        if hasattr(orig_request, 'url'):
+            orig_url = orig_request.url
+        else:
+            trigger_dump = True
+    else:
+        trigger_dump = True
+    if trigger_dump is True:
+        dump_resp(resp)
     logger.debug('{method} {code} {url}'.format(
-        method=resp.request.method,
+        method=orig_method,
         code=resp.status_code,
-        url=resp.request.url
+        url=orig_url
     ))
 
 
