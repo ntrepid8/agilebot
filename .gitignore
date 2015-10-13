@@ -61,3 +61,6 @@ venv/
 
 # IDEA
 .idea/
+
+# Vagrant
+.vagrant/
