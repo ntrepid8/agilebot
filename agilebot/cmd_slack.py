@@ -86,7 +86,7 @@ def sub_command(main_subparsers):
     p_opt_group.set_defaults(
         icon_emoji=os.environ.get('SLACK_ICON_EMOJI'),
     )
-    
+
     # p defaults
     p_parser.set_defaults(func=cmd_slack_post)
 

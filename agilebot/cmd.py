@@ -69,22 +69,24 @@ def main():
     subparsers = parser.add_subparsers(help='sub-command help', dest='subparser_0')
     parser.add_argument('--conf', action='store_true', default=False, help='print current configuration')
 
-    # set defaults, ENV var first, then config file, then command line args
-    parser.set_defaults(
-        func=None,
-        func_help=parser.print_help,
-        agile_sprint_lists=get_first_value(
-            os.environ.get('AGILE_SPRINT_LISTS'),
-            conf['agile']['sprint_lists']
-        ),
-    )
-
     # boards sub-command
     sub_commands = {
         'slack': cmd_slack.sub_command(subparsers),
         'sprint': cmd_sprint.sub_command(subparsers),
         'trello': cmd_trello.sub_command(subparsers)
     }
+
+    # set defaults, ENV var first, then config file, then command line args
+    # don't set func or func_help due to a bug in argparse that isn't fixed in python 3.4 yet
+    # http://bugs.python.org/issue9351
+    parser.set_defaults(
+        # func=None,
+        # func_help=parser.print_help,
+        agile_sprint_lists=get_first_value(
+            os.environ.get('AGILE_SPRINT_LISTS'),
+            conf['agile']['sprint_lists']
+        ),
+    )
 
     # parse the arguments
     args = parser.parse_args()
