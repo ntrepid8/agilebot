@@ -24,7 +24,11 @@ Vagrant.configure(2) do |config|
     sudo apt-get install -y \
       git \
       vim \
-      build-essential
+      build-essential \
+      python3 \
+      python3-dev \
+      python3-pip \
+      python-virtualenv
   SHELL
 
   # setup git
