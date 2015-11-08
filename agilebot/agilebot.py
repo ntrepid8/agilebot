@@ -126,6 +126,7 @@ class AgileBot(object):
             if os.path.exists(self.conf['sprint']['active_sprint_path']):
                 with open(self.conf['sprint']['active_sprint_path']) as f:
                     closing_sprint = json.load(f)
+                closing_sprint['trello_board'] = self.trello.get_board(closing_sprint['trello_board']['id'])
             else:
                 closing_sprint = None
         elif closing_sprint_name is not None:
@@ -146,12 +147,19 @@ class AgileBot(object):
         else:
             closing_sprint = None
 
+        # compute members
+        if closing_sprint and closing_sprint.get('trello_board'):
+            members = closing_sprint['trello_board'].get('members') or []
+        else:
+            members = []
+
         # create a trello board for the sprint
         try:
             trello_board = self.trello.create_board(
                 board_name=new_sprint['name'],
                 list_names=new_sprint['lists'],
-                organization_id=organization_id
+                organization_id=organization_id,
+                members=members
             )
         except Exception as e:
             logger.debug('while running trello.create_board agilebot.create_sprint caught: {}({})'.format(

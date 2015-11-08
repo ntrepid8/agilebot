@@ -65,7 +65,8 @@ class TrelloBot(object):
             '{base_url}/boards/{board_id}'.format(base_url=TRELLO_API_BASE_URL, board_id=board_id),
             params={
                 'lists': lists,
-                'cards': cards
+                'cards': cards,
+                'members': 'all'
             }
         )
         util.log_request_response(resp, logger)
@@ -110,7 +111,7 @@ class TrelloBot(object):
         # return the list of boards
         return boards
 
-    def create_board(self, board_name, list_names=None, organization_id=None):
+    def create_board(self, board_name, list_names=None, organization_id=None, members=None):
 
         # validate board name
         if board_name is None:
@@ -123,6 +124,7 @@ class TrelloBot(object):
         p_board_name = board_name
         p_organization_id = organization_id or self.conf.organization_id
         p_list_names = list_names or []
+        p_members = members or []
 
         # check for duplicate names among open boards
         dups = self.find_boards(board_name=p_board_name, organization_id=p_organization_id)
@@ -145,6 +147,31 @@ class TrelloBot(object):
         if resp.status_code != requests.codes.ok:
             raise ValueError('http error: {}'.format(resp.status_code))
         board = resp.json()
+
+        # get current user
+        resp = self.session.get(
+            '{base_url}/members/me'.format(base_url=TRELLO_API_BASE_URL)
+        )
+        util.log_request_response(resp, logger)
+        if resp.status_code != requests.codes.ok:
+            raise ValueError('http error: {}'.format(resp.status_code))
+        current_user = resp.json()
+
+        # add members if any are specified
+        p_member_ids = [m['id'] for m in p_members if m['id'] != current_user['id']]
+        for m_id in p_member_ids:
+            resp = self.session.put(
+                '{base_url}/boards/{board_id}/members/{member_id}'.format(
+                    base_url=TRELLO_API_BASE_URL,
+                    board_id=board['id'],
+                    member_id=m_id
+                ),
+                headers={'Content-Type': 'application/json'},
+                data=json.dumps({'idMember': m_id, 'type': 'normal'})
+            )
+            util.log_request_response(resp, logger)
+            if resp.status_code != requests.codes.ok:
+                raise ValueError('http error: {}'.format(resp.status_code))
 
         # if lists are specified, purge the default lists
         if list_names is not None:
